@@ -1,0 +1,180 @@
+.model small
+.stack 100h
+.data
+count db 0
+linestart dw 0
+lineend dw 0
+linecol	dw 0
+linecolr dw 0
+firstcol db 0
+nextcol  db 0
+delay1 dw 00h
+delay2 dw 00h
+delay3 dw 00h
+delay4 dw 00h
+topcurve1 db 	30,30,30,30,30,30,30,30,30,30
+topcurve2 db 	30,30,30,30,30,30,30,30,30,30
+topcurve3 db 	28,28,28,28,28,28,28,28,28,28
+topcurve4 db 	28,28,28,28,28,28,28,28,28,28
+topcurve5 db  	26,26,26,26,26,26,26,26,26,26
+topcurve6 db 	26,26,26,26,26,26,26,26,26,26
+topcurve7 db 	24,24,24,24,24,24,24,24,24,24
+topcurve8 db 	24,24,24,24,24,24,24,24,24,24
+topcurve9 db	22,22,22,22,22,22,22,22,22,22
+topcurve10 db	22,22,22,22,22,22,22,22,22,22
+topcurve11 db	20,20,20,20,20,20,20,20,20,20
+topcurve12 db	20,20,20,20,20,20,20,20,20,20
+topcurve13 db	18,18,18,18,18,18,18,18,18,18
+topcurve14 db	18,18,18,18,18,18,18,18,18,18
+topcurve15 db	16,16,16,16,16,16,16,16,16,16
+topcurve16 db	16,16,16,16,16,16,16,16,16,16
+topcurve17 db   16,16,16,16,16,16,16,16,16,16
+topcurve18 db   16,16,16,16,16,16,16,16,16,16
+topcurve19 db	18,18,18,18,18,18,18,18,18,18
+topcurve20 db	18,18,18,18,18,18,18,18,18,18
+topcurve21 db	20,20,20,20,20,20,20,20,20,20
+topcurve22 db	20,20,20,20,20,20,20,20,20,20
+topcurve23 db	22,22,22,22,22,22,22,22,22,22
+topcurve24 db	22,22,22,22,22,22,22,22,22,22
+topcurve25 db 	24,24,24,24,24,24,24,24,24,24
+topcurve26 db 	24,24,24,24,24,24,24,24,24,24
+topcurve27 db  	26,26,26,26,26,26,26,26,26,26
+topcurve28 db 	26,26,26,26,26,26,26,26,26,26
+topcurve29 db 	28,28,28,28,28,28,28,28,28,28
+topcurve30 db 	28,28,28,28,28,28,28,28,28,28
+topcurve31 db 	30,30,30,30,30,30,30,30,30,30
+topcurve32 db 	30,30,30,30,30,30,30,30,30,30
+.code
+start:
+		mov ax,@data
+		mov ds,ax
+		call setmode
+		call movecurve
+		mov ax,4c00h
+		int 21h
+
+
+
+setmode proc
+	mov al,13h
+	mov ah,0
+	int 10h
+	ret
+setmode endp
+
+drawvertline proc
+	mov al,linecolr
+	mov cx,linecol
+	mov dx,linestart
+	mov ah,0ch
+vnext:
+	int 10h
+	inc dx
+	cmp dx,lineend
+	jbe vnext
+	ret
+drawvertline endp
+
+drawcurve proc
+	lea si,topcurve1
+	mov linecol,0
+nextline:
+	mov linestart,0
+	mov lineend,200
+	mov linecolr,0000b
+	call drawvertline
+	mov bl,[si]
+	mov bh,0
+	mov lineend,bx
+	inc si
+	
+	mov linecolr,0011b
+	call drawvertline
+	
+	mov lineend,200
+	mov linestart,170
+	mov linecolr,0000b
+	call drawvertline
+
+	mov linecolr,0011b
+	mov linestart,bx
+	add linestart,154
+
+	call drawvertline
+	cmp bx,30
+	jne continue
+	mov linestart,70
+	mov lineend,150
+	call drawvertline
+
+continue:
+	inc linecol
+	cmp linecol,320
+	jb nextline
+
+	ret
+drawcurve endp
+
+shiftarray proc
+	lea si,topcurve1
+	mov bl,[si]
+	mov firstcol,bl
+	mov cx,1
+	mov ax,01h
+shiftnext:
+	inc cx
+	mov bl,[si+1]
+	mov [si],bl
+	inc si
+
+	cmp cx,320
+	jb shiftnext
+
+	mov bl,firstcol
+	mov [si],bl
+	ret
+shiftarray endp
+
+delay	proc
+	mov delay1,00h
+
+waitloop1:
+	inc delay1
+	
+	mov delay2,0
+waitloop2:
+	inc delay2
+	
+	mov delay3,00h
+waitloop3:
+	inc delay3
+	mov delay4,00h
+waitloop4:
+	inc delay4
+	cmp delay4,65000
+;	jbe waitloop4
+
+	cmp delay3,65000
+;	jbe waitloop3
+
+	cmp delay2,65000
+;	jbe waitloop2
+
+	cmp delay1,65000
+	jbe waitloop1
+
+	ret
+delay endp
+
+movecurve proc
+	mov linecolr,0011b
+nextscreen:
+	call drawcurve
+	call shiftarray
+;	call delay
+	mov linecolr,1100b
+	jmp nextscreen
+
+	ret
+movecurve endp
+end start
