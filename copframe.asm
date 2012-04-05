@@ -9,6 +9,7 @@ linecolr dw 0
 firstcol db 0
 nextcol  db 0
 col dw 0
+ncol dw 0
 row dw 0
 delay1 dw 00h
 delay2 dw 00h
@@ -190,7 +191,16 @@ movecurve endp
 movecurve1 proc
 	mov col,00h
 nextcol1:
+	
 	mov row,00h
+	cmp col,319
+	je lastcol
+	mov bx,col
+	inc bx
+	mov ncol,bx
+	jmp nextrow1
+lastcol:
+	mov ncol,00h
 nextrow1:
 	mov ah,0dh
 	mov cx,col
@@ -202,9 +212,9 @@ nextrow1:
 	jne goout
 continue1:
 	mov ah,0dh
-	inc col
-	mov cx,col
-	dec col
+
+	mov cx,ncol
+
 	mov dx,row
 	int 10h
 	mov bl,al
@@ -218,12 +228,8 @@ continue1:
 	jbe nextrow1
 	
 	inc col 
-	cmp col,299
-	je temp1
+	cmp col,319
 	jbe nextcol1
-temp1:
-	mov col,0
-	jmp nextcol1
 
 goout:
 	ret	
