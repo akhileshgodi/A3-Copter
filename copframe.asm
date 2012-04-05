@@ -8,6 +8,8 @@ linecol	dw 0
 linecolr dw 0
 firstcol db 0
 nextcol  db 0
+col dw 0
+row dw 0
 delay1 dw 00h
 delay2 dw 00h
 delay3 dw 00h
@@ -158,7 +160,7 @@ waitloop4:
 ;	jbe waitloop3
 
 	cmp delay2,65000
-;	jbe waitloop2
+	jbe waitloop2
 
 	cmp delay1,65000
 	jbe waitloop1
@@ -166,15 +168,65 @@ waitloop4:
 	ret
 delay endp
 
-movecurve proc
-	mov linecolr,0011b
-nextscreen:
-	call drawcurve
-	call shiftarray
+;movecurve proc
+;	mov linecolr,0011b
+;nextscreen:
+;	call drawcurve
+;	call shiftarray
 ;	call delay
-	mov linecolr,1100b
-	jmp nextscreen
+;	mov linecolr,1100b
+;	jmp nextscreen
 
+;	ret
+;movecurve endp
+movecurve proc
+	call drawcurve
+nextframe:
+	call movecurve1
+;	call delay
+	jmp nextframe
 	ret
 movecurve endp
+movecurve1 proc
+	mov col,00h
+nextcol1:
+	mov row,00h
+nextrow1:
+	mov ah,0dh
+	mov cx,col
+	mov dx,row
+	int 10h
+	cmp al,0000b
+	je continue1
+	cmp al,0011b
+	jne goout
+continue1:
+	mov ah,0dh
+	inc col
+	mov cx,col
+	dec col
+	mov dx,row
+	int 10h
+	mov bl,al
+	mov ah,0ch
+	mov al,bl
+	mov cx,col
+	mov dx,row
+	int 10h
+	inc row
+	cmp row,30
+	jbe nextrow1
+	
+	inc col 
+	cmp col,299
+	je temp1
+	jbe nextcol1
+temp1:
+	mov col,0
+	jmp nextcol1
+
+goout:
+	ret	
+movecurve1 endp
+
 end start
