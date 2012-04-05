@@ -11,6 +11,10 @@ nextcol  db 0
 col dw 0
 ncol dw 0
 row dw 0
+obsrow dw 0
+count1 dw 0
+linecol2 dw 0
+linecol3 dw 0
 delay1 dw 00h
 delay2 dw 00h
 delay3 dw 00h
@@ -104,13 +108,7 @@ nextline:
 	add linestart,154
 
 	call drawvertline
-	cmp bx,30
-	jne continue
-	mov linestart,70
-	mov lineend,150
-	call drawvertline
 
-continue:
 	inc linecol
 	cmp linecol,320
 	jb nextline
@@ -182,8 +180,12 @@ delay endp
 ;movecurve endp
 movecurve proc
 	call drawcurve
+	mov linecol3,299
 nextframe:
 	call movecurve1
+	
+	call moveobstacle
+	dec linecol3
 ;	call delay
 	jmp nextframe
 	ret
@@ -234,5 +236,39 @@ continue1:
 goout:
 	ret	
 movecurve1 endp
+drawobstacle proc
+	mov bx,obsrow
+	mov count1,0
+	mov linestart,bx
+	add bx,70
+	mov lineend,bx
+	mov bx,linecol2
+	mov linecol,bx
+nextline2:
+	call drawvertline
+	inc linecol
+	inc count
+	cmp count,20
+	jbe nextline2
+ret
+drawobstacle endp
 
+moveobstacle proc
+	mov obsrow,50
+	mov bx,linecol3
+	mov linecol2,bx
+	call drawobstacle
+
+nextpos:
+	mov linecolr,0000b
+	call drawobstacle
+
+	dec linecol2
+	mov linecolr,0011b
+	call drawobstacle
+
+;	cmp linecol2,0
+;	jne nextpos
+	ret
+moveobstacle endp
 end start
