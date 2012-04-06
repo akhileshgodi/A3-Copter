@@ -1,1 +1,2 @@
-This is a README file.
+To draw the helicopter, make sure the "heli.txt" file is in the MASM directory along with helifile.asm, and call the DrawCopter macro with the required co-ordinates as the parameters
+//TODO : Erase Copter macro - erases the copter(only) given its current position
