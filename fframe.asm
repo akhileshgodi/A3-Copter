@@ -1,3 +1,4 @@
+
 .model small
 .stack 100h
 .data
@@ -24,7 +25,7 @@ count1		dw	00h
 count2		dw	00h
 topcurve db 320 dup(0)
 filename db "curve1.txt"
-
+randnum	 db 00h
 .code
 
 start:
@@ -41,7 +42,7 @@ start:
 
 		mov ax,4c00h
 		int 21h
-
+; to set video mode
 setmode	proc
 				
 		mov al,13h
@@ -51,6 +52,11 @@ setmode	proc
 
 setmode	endp
 
+; procedure  to draw vertical line
+; linecolor - used to pass color of the line
+; linestart - used to pass starting pixel of th  eline
+; lineend - used to pass end pixel of the line
+; linecol - used to pass column of line
 drawvertline proc
 		mov al,linecolor
 		mov cx,linecol
@@ -64,9 +70,10 @@ vnext:
 		ret
 drawvertline endp
 
+; procedure to draw curve
 drawcurve proc
 				
-		lea si,topcurve
+		lea si,topcurve 
 		mov linecol,00h
 		mov lineend,00h
 		mov linecolor,0011b
@@ -90,7 +97,7 @@ nextline:
 
 		ret
 drawcurve endp
-
+; procedure to put delay in loops
 delay	proc
 		mov delay1,00h
 
@@ -122,12 +129,18 @@ waitloop4:
 		ret
 delay	endp
 
+; Procedure to move frame (moving curve and obstacle)
+; procedure calls movecurve and moveobstacle
+
 moveframe 	proc
 		call drawcurve
 		
 nextobstacle:
 		mov count2,00h
 		mov obstaclecol,299
+		call randomnum
+		mov bl,randnum
+		mov obsrow,bl
 nextframe:
 		inc count2
 		mov testrow,00h
@@ -145,7 +158,8 @@ nextframe:
 		jmp nextobstacle
 		ret
 moveframe	endp
-
+; procedure to move the top and bottom curves
+; checks color of pixels in next column and moves accordingly
 movecurve	proc	
 		mov col,00h
 nextcol:
@@ -196,6 +210,8 @@ goout:
 		ret
 movecurve	endp	
 
+; draws one obstacle
+; top left pixel passed as obsrow,obscol
 drawobstacle proc
 		mov bx,obsrow
 		mov count1,00h
@@ -214,8 +230,9 @@ nextline1:
 		ret
 drawobstacle endp
 
+; moves the obstacle by one column forward
+; obstaclecol variable used to pass column of the obstacle
 moveobstacle proc
-		mov obsrow,50
 		mov bx,obstaclecol
 		mov obscol,bx
 		call drawobstacle
@@ -229,6 +246,14 @@ nextpos:
 		
 		ret
 moveobstacle endp
+
+randomnum	proc
+		mov ah,2ch
+		int 21h
+		mov randnum,dl
+		ret
+randomnum	endp
+		
 readcurve	proc
 		mov al, 2
 		mov dx, offset filename
