@@ -23,6 +23,7 @@ linestart	dw	00h
 lineend		dw	00h
 count1		dw	00h
 count2		dw	00h
+count3		dw	00h
 topcurve db 320 dup(0)
 filename db "curve1.txt"
 randnum	 db 00h
@@ -137,6 +138,8 @@ moveframe 	proc
 		
 nextobstacle:
 		mov count2,00h
+		
+		mov linecolor,1010b
 		mov obstaclecol,299
 		call randomnum
 		mov bl,randnum
@@ -154,7 +157,19 @@ nextframe:
 
 		cmp count2,320
 		jbe	nextframe
-
+		
+		mov count3,00h
+		mov linecolor,0000b
+		mov linecol,298
+		mov linestart,31
+		mov lineend,169
+nextl:
+		;inc linecol
+		;call drawvertline
+		;cmp count3,20
+		;jbe nextl
+		
+		;mov linecolor,1010b
 		jmp nextobstacle
 		ret
 moveframe	endp
@@ -216,7 +231,7 @@ drawobstacle proc
 		mov bx,obsrow
 		mov count1,00h
 		mov linestart,bx
-		add bx,50
+		add bx,55
 		mov lineend,bx
 		mov bx,obscol
 		mov linecol,bx
@@ -247,7 +262,7 @@ nextpos:
 		mov linecol,ax
 		mov ax,obsrow
 		mov linestart,ax
-		add ax,50
+		add ax,55
 		mov lineend,ax
 		mov linecolor,0000b
 		call drawvertline
