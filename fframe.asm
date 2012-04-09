@@ -34,7 +34,7 @@ start:
 				
 		call setmode
 		call readcurve
-		mov linecolor,0011b
+		mov linecolor,1010b
 		mov linecol,50
 		mov linestart,30
 		mov lineend,70
@@ -76,7 +76,7 @@ drawcurve proc
 		lea si,topcurve 
 		mov linecol,00h
 		mov lineend,00h
-		mov linecolor,0011b
+		mov linecolor,1010b
 nextline:
 		mov linestart,0
 		mov bl,[si]
@@ -183,7 +183,7 @@ nextrow:
 		
 		cmp al,0000b
 		je continue
-		cmp al,0011b
+		cmp al,1010b
 		jne goout
 continue:
 		mov ah,0dh
@@ -216,7 +216,7 @@ drawobstacle proc
 		mov bx,obsrow
 		mov count1,00h
 		mov linestart,bx
-		add bx,70
+		add bx,50
 		mov lineend,bx
 		mov bx,obscol
 		mov linecol,bx
@@ -235,22 +235,39 @@ drawobstacle endp
 moveobstacle proc
 		mov bx,obstaclecol
 		mov obscol,bx
-		call drawobstacle
+	;	call drawobstacle
 
 nextpos:
-		mov linecolor,0000b
-		call drawobstacle
 		dec obscol
-		mov linecolor,0011b
+		mov linecolor,1010b
 		call drawobstacle
 		
+		mov ax,obscol
+		add ax,20
+		mov linecol,ax
+		mov ax,obsrow
+		mov linestart,ax
+		add ax,50
+		mov lineend,ax
+		mov linecolor,0000b
+		call drawvertline
+
+		mov linecolor,1010b
 		ret
 moveobstacle endp
 
 randomnum	proc
 		mov ah,2ch
 		int 21h
-		mov randnum,dl
+		mov dh,00h
+		mov ax,dx
+		mov dl,50
+		div dl
+		add ah,40
+
+		
+		mov randnum,ah
+
 		ret
 randomnum	endp
 		
