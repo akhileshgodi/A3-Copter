@@ -32,7 +32,8 @@ VideoSeg equ 0B800H      ; video segment
 	print_col dw 100
 	current_copter_row dw 0  
 	current_copter_col dw 0
-	image_width dw 29    ; actual length in the image is 11
+	image_width dw 29    ; actual length in the image is 30
+	image_height dw 15
 	image_file db "heli.txt", 0 ; Place the heli.txt file in the MASM FOLDER
 	file_handle dw ?
 	buffer dw ?
@@ -755,6 +756,69 @@ TEXT:
         	call popa
 			ret
 	DetectCollision ENDP
+	;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+ 	
+	;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+	ClearCopter PROC
+		comment/*
+		int i = currentrow
+		int j = currentcol
+		while( i <  copterwidth )
+		{
+			while ( j < copterheight )
+			{
+				clear pixel i,j
+				j++
+			}
+			i++
+			j = currentcol
+		}/*
+		push ax
+		push bx
+	
+		inc image_width ; because the actual width is 1 + image_width
+	
+		mov row, 0
+		mov col, 0
+	
+		mov ax, current_copter_row
+		mov print_row, ax
+	
+		mov bx, current_copter_col
+		mov print_col, bx
+	
+		outerLoop:
+		
+			innerLoop:
+		
+				DrawPixel 0000b, print_row, print_col
+				inc col
+				inc print_col
+			
+				mov ax, col
+				cmp ax, image_width
+				jle innerLoop
+			
+			inc row
+			inc print_row
+			
+			mov col, 0
+			mov print_col, bx
+			
+			mov ax, row
+			cmp ax, image_height
+			jle outerLoop
+		
+			
+		dec image_width	; undoing change to image_width so that drawCopter can be called again without error
+	
+		mov row, 0
+		mov col, 0
+		
+		pop bx
+		pop ax
+		ret
+	ClearCopter ENDP
 	;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
  	
 	;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
