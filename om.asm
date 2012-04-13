@@ -505,6 +505,10 @@ HideMouse    ENDP
 
 DrawCopter PROC
 			
+		push ax
+		push bx
+		push cx
+		push dx
 		;---------------------------------------------------------------
 		;	Assumes graphics mode is enabled
 		;	Global definitions(must exist) : 
@@ -585,6 +589,10 @@ DrawCopter PROC
 			mov bx, file_handle
 			mov ah, 3eh
 			int 21h
+			pop dx
+			pop cx
+			pop bx
+			pop ax
 			ret
 DrawCopter ENDP
 ;-----------------------------------------------------------------------------
@@ -674,7 +682,7 @@ DetectCollision PROC
 		add si,30
 		loop1:
 			cmp cx,si
-			jge loop2
+			jge outerloop2
 			;Retrieve color of the pixel at the location
 			mov ah,0Dh
 			int 10h			;al will now have the required pixel color
@@ -683,6 +691,7 @@ DetectCollision PROC
 			inc cx
 			jmp loop1
 		
+		outerloop2:
 		;for x = "column+29":
 		;	for all the ro from row to row+15
 		;	  check if the pixel color at ( ro ,x) == pixel color ar (ro,x+1)
@@ -693,7 +702,7 @@ DetectCollision PROC
 		add si,15
 		loop2:
 			cmp dx,si
-			jge loop3
+			jge outerloop3
 			mov ah,0dh
 			int 10h
 			cmp al, 1010b
@@ -701,7 +710,7 @@ DetectCollision PROC
 			inc dx
 			jmp loop2
 		
-		
+		outerloop3:
 		;for x = "row+14"
 		;	for all the col from column to column+14:
 		;	  check if the pixel colour at (x+1,col) == pixel colour ar (x,col)
@@ -768,6 +777,17 @@ START:
 	mov current_copter_col, 70
 	
 	call setMode
+	
+	
+	; reset mouse and get its status: 
+	mov ax, 0
+	int 33h
+	cmp ax, 0
+
+	; display mouse cursor: 
+	mov ax, 1 
+	int 33h
+	
 	call readcurve
 	mov linecolor,1010b
 	mov linecol,50
@@ -802,11 +822,11 @@ GAMELOOP:
 			cmp bx,1
 			je flag1
 			jmp flag2
-	flag1 :	call ClearCopter;Erase the present copter first
-			;call DetectCollision;Check if the pixels around the copter are gonna collide
+	flag1 :	call DetectCollision;Check if the pixels around the copter are gonna collide
 			cmp detect_collision, 1
 		   	je Text
 			;If yes Kaboom! GAME OVER otherwise keep polling.
+			call ClearCopter;Erase the present copter first
 			mov dx,current_copter_row
 			dec dx	;TODO : Adjust accordingly so that the speed does not become horrible 
 			mov current_copter_row,dx
@@ -817,14 +837,12 @@ GAMELOOP:
 		   jne flag3
 		   jmp Text
 		   
-	flag3: call ClearCopter;Erase the present copter
-		   ;Check if pixels around the copter are such that collision might occur
+	flag3: ;Check if pixels around the copter are such that collision might occur
 		   ;If yes Kaboom! GAME OVER otherwise keep polling.
 		   call DetectCollision
-		   
-		   
 		   cmp detect_collision, 1
 		   je Text
+		   call ClearCopter;Erase the present copter
 		   mov dx, current_copter_row
 		   inc dx		;Falling down : TODO - Adjust gravity accordingly.
 		   mov current_copter_row,dx
@@ -877,40 +895,5 @@ TEXT:
 	int 21h
 
 END START
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
