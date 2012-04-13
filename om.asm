@@ -295,7 +295,12 @@ MoveCurve	PROC
 		mov 	cx,ncol
 		mov 	dx,row_copter
 		int 	10h
-
+		
+		cmp al,0000b
+		je continue9
+		cmp	al,1010b
+		jne goout
+	continue9:
 		mov 	bl,al
 		mov 	ah,0ch
 		mov 	al,bl
@@ -783,7 +788,7 @@ GAMELOOP:
 	nextframe:
 			inc count2
 			mov testrow,00h
-			mov testend,30
+			mov testend,33
 			call movecurve
 			mov testrow,169
 			mov testend,200
