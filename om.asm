@@ -23,8 +23,8 @@
 	CR 			equ 13d 		;Carriage Return ASCII value
 	LF			equ 10d		;Next Line ASCII Value
 	VideoSeg equ 0B800H      ; video segment
-	row 			dw 0
-	col 			dw 0
+	row 		dw 0
+	col 		dw 0
 	print_row 	dw 100
 	print_col 	dw 100
 	current_copter_row dw 0  
@@ -34,19 +34,19 @@
 	image_file 	db "heli.txt", 0 ; Place the heli.txt file in the MASM FOLDER
 	file_handle dw ?
 	buffer 		dw ?
-	msg 			db " press any key.... $"
+	msg 		db " press any key.... $"
 	col_copter	dw	00h				;REUSED - Rename
 	row_copter	dw	00h				;REUSED - Rename
-	ncol	dw		00h
-	nrow	dw		00h
+	ncol		dw		00h
+	nrow		dw		00h
 	detect_collision db 0
 	delay1 		dw 00h
 	delay2 		dw 00h
 	delay3 		dw 00h
 	delay4 		dw 00h
-	tempend 		dw	00h
-	tempcol 		dw  00h
-	linecol 		dw  00h
+	tempend 	dw	00h
+	tempcol 	dw  00h
+	linecol 	dw  00h
 	testend		dw	00h
 	testrow		dw	00h
 	linecolor	dw	00h
@@ -92,14 +92,14 @@ DrawPixel macro color, pixel_row, pixel_col
 	    push 	ax
 	    push 	cx
 	    push 	dx
-	    mov 		ax, color
-	    mov 		dx, pixel_row
-	    mov 		cx, pixel_col
-	    mov 		ah, 0ch
-	    int 		10h    
-	    pop 		dx
+	    mov 	ax, color
+	    mov 	dx, pixel_row
+	    mov 	cx, pixel_col
+	    mov 	ah, 0ch
+	    int 	10h    
+	    pop 	dx
 	    pop		cx
-	    pop 		ax
+	    pop 	ax
 
 endm
 ;-----------------------------------------------------------------------------
@@ -107,9 +107,9 @@ endm
 ;-----------------------------------------------------------------------------
 SetMode	PROC
 					
-		mov 		al,13h
-		mov 		ah,00h
-		int 		10h
+		mov 	al,13h
+		mov 	ah,00h
+		int 	10h
 		ret
 		
 SetMode	ENDP
@@ -121,15 +121,15 @@ SetMode	ENDP
 ; linecol - used to pass column of line
 ;-----------------------------------------------------------------------------
 DrawVertLine PROC
-		mov 		ax,linecolor
-		mov 		cx,linecol
-		mov 		dx,linestart
-		mov 		ah,0ch
+		mov 	ax,linecolor
+		mov 	cx,linecol
+		mov 	dx,linestart
+		mov 	ah,0ch
 		vnext:
-				int 10h
-				inc dx
-				cmp dx,lineend
-				jbe vnext
+				int 	10h
+				inc 	dx
+				cmp 	dx,lineend
+				jbe 	vnext
 	ret
 DrawVertLine ENDP
 ;-----------------------------------------------------------------------------
@@ -137,10 +137,10 @@ DrawVertLine ENDP
 ;-----------------------------------------------------------------------------
 DrawCurve PROC
 				
-		lea 		si,topcurve 
-		mov 		linecol,00h
-		mov		 lineend,00h
-		mov 		linecolor,1010b
+		lea 	si,topcurve 
+		mov 	linecol,00h
+		mov		lineend,00h
+		mov 	linecolor,1010b
 		nextline:
 				mov linestart,0
 				mov bl,[si]
@@ -150,13 +150,13 @@ DrawCurve PROC
 					
 		call 	DrawVertLine
 
-		mov 		linestart,bx
-		add 		linestart,154
-		mov 		lineend,200
+		mov 	linestart,bx
+		add 	linestart,154
+		mov 	lineend,200
 		call 	drawvertline 
 
-		inc 		linecol
-		cmp 		linecol,320
+		inc 	linecol
+		cmp 	linecol,320
 		jb 		nextline
 
 	ret
@@ -165,7 +165,7 @@ DrawCurve ENDP
 ;	THE DELAY PROCEDURE
 ;-----------------------------------------------------------------------------
 Delay	PROC
-		mov 		delay1,00h
+		mov 	delay1,00h
 		waitloop1:
 				inc delay1
 				mov delay2,00h
@@ -181,13 +181,13 @@ Delay	PROC
 				cmp delay4,5000
 				jbe waitloop4
 		
-		cmp 		delay3,5000
-		jbe 		waitloop3
+		cmp 	delay3,5000
+		jbe 	waitloop3
 
-		cmp 		delay2,5000
-		jbe 		waitloop2
+		cmp 	delay2,5000
+		jbe 	waitloop2
 
-		cmp 		delay1,5000
+		cmp 	delay1,5000
 		jbe		waitloop1
 
 		ret
@@ -201,59 +201,60 @@ MoveFrame PROC
 		call drawcurve
 		
 		nextobstacle:
-			mov 		count2,00h
-			mov 		linecolor,1010b
-			mov 		obstaclecol,299
+			mov 	count2,00h
+			mov 	linecolor,1010b
+			mov 	obstaclecol,299
 			call 	randomnum
-			mov 		bl,randnum
-			mov 		obsrow,bl
+			mov 	bl,randnum
+			mov 	obsrow,bl
 		nextframe:
 			inc		count2
-			mov 		testrow,00h
-			mov 		testend,30
+			mov 	testrow,00h
+			mov 	testend,30
 			call 	movecurve
-			mov 		testrow,169
-			mov 		testend,200
+			mov 	testrow,169
+			mov 	testend,200
 			call 	movecurve
 			call 	moveobstacle
-			dec 		obstaclecol
+			dec 	obstaclecol
 	
 			cmp	 	count2,320
 			jbe		nextframe
 			
 			mov	 	count3,00h
-			mov 		linecolor,0000b
-			mov 		linecol,298
-			mov 		linestart,31
-			mov 		lineend,169
+			mov 	linecolor,0000b
+			mov 	linecol,298
+			mov 	linestart,31
+			mov 	lineend,169
 		nextl:	
 			;inc 	linecol
 			;call 	drawvertline
 			;cmp 	count3,20
-			;jbe		 nextl
+			;jbe	nextl
 			
-			;mov		linecolor,1010b
-			jmp 		nextobstacle
+			;mov	linecolor,1010b
+			jmp 	nextobstacle
 MoveFrame	ENDP
 /*
 ;-----------------------------------------------------------------------------
 ;	READS THE CURVE FROM THE FILE
 ;-----------------------------------------------------------------------------
 ReadCurve	PROC
-		mov 		al, 2				;al has access or sharing modes
-		mov 		dx, offset filename ;DS:DX - ASCIZ file name
-		mov 		ah, 3dh				;Open existing file
-		int 		21h					;Do it.
+		mov 	al, 2				;al has access or sharing modes
+		mov 	dx, offset filename ;DS:DX - ASCIZ file name
+		mov 	ah, 3dh				;Open existing file
+		int 	21h					;Do it.
 		
 		;Read from the file
-		mov 		bx, ax				;Pass on the file handle returned after opening the file to bx	
-		mov 		cx, 320				;Number of bytes to read
-		mov 		dx, offset topcurve	;Buffer for data
-		mov 		ah, 3fh				;Read from file to buffer
-		int 		21h					;Do it.
+		;mov 
+		mov 	bx, ax				;Pass on the file handle returned after opening the file to bx	
+		mov 	cx, 320				;Number of bytes to read
+		mov 	dx, offset topcurve	;Buffer for data
+		mov 	ah, 3fh				;Read from file to buffer
+		int 	21h					;Do it.
 
-		mov 		ah, 3eh				;Close the file
-		int 		21h					;Do it.
+		mov 	ah, 3eh				;Close the file
+		int 	21h					;Do it.
 
 		ret
 ReadCurve	ENDP
@@ -263,53 +264,53 @@ ReadCurve	ENDP
 ; checks color of pixels in next column and moves accordingly
 ;-----------------------------------------------------------------------------
 MoveCurve	PROC	
-		mov 		col_copter,00h
+		mov 	col_copter,00h
 		nextcol:
 			mov		bx,testrow
-			mov 		row_copter,bx
-			cmp 		col_copter,319
+			mov 	row_copter,bx
+			cmp 	col_copter,319
 			je 		lastcol
 
 			mov		bx,col_copter
 			inc		bx
-			mov 		ncol,bx
-			jmp 		nextrow
+			mov 	ncol,bx
+			jmp 	nextrow
 
 		lastcol:
-			mov 		ncol,00h
+			mov 	ncol,00h
 
 		nextrow:
 			mov		ah,0dh
-			mov 		cx,col_copter
-			mov 		dx,row_copter
+			mov 	cx,col_copter
+			mov 	dx,row_copter
 			int		10h
 		
-		cmp 		al,0000b
+		cmp 	al,0000b
 		je 		continue_
-		cmp 		al,1010b
-		jne 		goout
+		cmp 	al,1010b
+		jne 	goout
 	
 	continue_:
-		mov 		ah,0dh
-		mov 		cx,ncol
-		mov 		dx,row_copter
-		int 		10h
+		mov 	ah,0dh
+		mov 	cx,ncol
+		mov 	dx,row_copter
+		int 	10h
 
-		mov 		bl,al
-		mov 		ah,0ch
-		mov 		al,bl
-		mov 		cx,col_copter
-		mov 		dx,row_copter
-		int 		10h
+		mov 	bl,al
+		mov 	ah,0ch
+		mov 	al,bl
+		mov 	cx,col_copter
+		mov 	dx,row_copter
+		int 	10h
 
-		inc 		row_copter
-		mov 		bx,testend
-		cmp 		row_copter,bx
-		jbe 		nextrow
+		inc 	row_copter
+		mov 	bx,testend
+		cmp 	row_copter,bx
+		jbe 	nextrow
 
-		inc 		col_copter
-		cmp 		col_copter,319
-		jbe 		nextcol
+		inc 	col_copter
+		cmp 	col_copter,319
+		jbe 	nextcol
 	goout:
 		ret
 MoveCurve	ENDP
@@ -320,19 +321,19 @@ MoveCurve	ENDP
 ;-----------------------------------------------------------------------------
 DrawObstacle PROC
 		mov		bh,0
-		mov 		bl,obsrow
-		mov 		count1,00h
-		mov 		linestart,bx
-		add 		bx,55
-		mov 		lineend,bx
-		mov 		bx,obscol
-		mov 		linecol,bx
+		mov 	bl,obsrow
+		mov 	count1,00h
+		mov 	linestart,bx
+		add 	bx,55
+		mov 	lineend,bx
+		mov 	bx,obscol
+		mov 	linecol,bx
 	nextline1:
 		call 	DrawVertLine
-		inc 		linecol
-		inc 		count1
-		cmp 		count1,20
-		jbe 		nextline1
+		inc 	linecol
+		inc 	count1
+		cmp 	count1,20
+		jbe 	nextline1
 
 		ret
 DrawObstacle ENDP
@@ -342,42 +343,42 @@ DrawObstacle ENDP
 ;-----------------------------------------------------------------------------
 
 MoveObstacle PROC
-		mov 		bx,obstaclecol
+		mov 	bx,obstaclecol
 		mov		obscol,bx
 	;	call 	drawobstacle
 
 	nextpos:
-		dec 		obscol
-		mov 		linecolor,1010b
+		dec 	obscol
+		mov 	linecolor,1010b
 		call 	drawobstacle
 		
-		mov 		ax,obscol
-		add 		ax,20
-		mov 		linecol,ax
-		mov 		ah,0
-		mov 		al,obsrow
-		mov 		linestart,ax
-		add 		ax,55
-		mov 		lineend,ax
-		mov 		linecolor,0000b
+		mov 	ax,obscol
+		add 	ax,20
+		mov 	linecol,ax
+		mov 	ah,0
+		mov 	al,obsrow
+		mov 	linestart,ax
+		add 	ax,55
+		mov 	lineend,ax
+		mov 	linecolor,0000b
 		call 	drawvertline
 
-		mov 		linecolor,1010b
+		mov 	linecolor,1010b
 		ret
 MoveObstacle ENDP
 ;-----------------------------------------------------------------------------
 ; RANDOM NUMBER GENERATOR - RESULT IN randnum
 ;-----------------------------------------------------------------------------
 RandomNum PROC
-		mov 		ah,2ch
-		int 		21h
-		mov 		dh,00h
-		mov 		ax,dx
-		mov 		dl,50
-		div 		dl
-		add 		ah,40
+		mov 	ah,2ch
+		int 	21h
+		mov 	dh,00h
+		mov 	ax,dx
+		mov 	dl,50
+		div 	dl
+		add 	ah,40
 
-		mov 		randnum,ah
+		mov 	randnum,ah
 
 		ret
 RandomNum ENDP
@@ -395,7 +396,7 @@ PutChar      PROC
          mov 	di, VideoSeg   ; establish the ES segment
          mov 	es, di
 
-         xor		ax, ax         ; clear AX
+         xor	ax, ax         ; clear AX
          mov 	al, BYTE PTR CursorY    ; load the row number in AX
          xchg 	ah, al        ; multiply AX by 256
          shr 	ax, 1          ; AX = CursorY*128
@@ -411,7 +412,7 @@ PutChar      PROC
          pop 	ax             ; restore AX
          mov 	ah, BColor
          shl 	ah, 1
-         shl	 	ah, 1
+         shl	ah, 1
          shl 	ah, 1
          shl 	ah, 1
          add 	ah, FColor     ; now AH contains the color attributes
@@ -456,19 +457,19 @@ WriteLn ENDP
 InitMouse  PROC
         push 	ax
         push 	si
-   	    mov 		ax, 0
-        int 		33h
+   	    mov 	ax, 0
+        int 	33h
         clc
-        cmp 		ax, 0          ; AX=0 if mouse driver is not installed
-        jnz 		mend
-        mov 		si, offset NoMouse
+        cmp 	ax, 0          ; AX=0 if mouse driver is not installed
+        jnz 	mend
+        mov 	si, offset NoMouse
    	    call 	WriteLn       ; print "mouse driver is not installed"
-        mov 		si, offset AnyKey
-        mov 		CursorX, 5
-        mov 		CursorY, 6
+        mov 	si, offset AnyKey
+        mov 	CursorX, 5
+        mov 	CursorY, 6
         call 	WriteLn       ; print "press any key ..."
-        mov 		ax, 0          ; wait for a key
-        int 		16h
+        mov 	ax, 0          ; wait for a key
+        int 	16h
         stc
 	mend:    pop 	si
              pop 	ax
@@ -477,17 +478,17 @@ InitMouse ENDP
 	
 ShowMouse    PROC
         push 	ax
-        mov 		ax, 1
-        int 		33h
-        pop 		ax
+        mov 	ax, 1
+        int 	33h
+        pop 	ax
         ret
 ShowMouse    ENDP
 
 HideMouse    PROC
         push 	ax
-        mov 		ax, 2
-        int 		33h
-        pop 		ax
+        mov 	ax, 2
+        int 	33h
+        pop 	ax
         ret
 HideMouse    ENDP
 
@@ -522,60 +523,63 @@ DrawCopter PROC
 		mov print_col, 0
 		
 		; Opening the file for reading - NOTE : The file must be in the appropriate folder
-		mov 		al,0        
-		mov 		dx,offset image_file
-		mov 		ah,03dh
-		int 		21h
+		mov 	al,0        
+		mov 	dx,offset image_file
+		mov 	ah,03dh
+		int 	21h
 		
 		; If file is not read, jump to error
 		
 		jc 		erro
-		mov 		file_handle,ax 
+		mov 	file_handle,ax 
 	
 		; The read cycle - Basically, numbers are read from the file, and corresponding colors are drawn on the screen
 			read:
-				mov 		bx,file_handle    
-				mov 		dx,offset buffer
-				mov 		al,0
-				mov 		cx,1
-				mov 		ah,3Fh
-				int 		21h
+				mov 	bx,file_handle    
+				mov 	dx,offset buffer
+				mov 	al,0
+				mov 	cx,1
+				mov 	ah,3Fh
+				int 	21h
 				
-				cmp 		ax, 0
+				cmp 	ax, 0
 				je 		erro
 				
-				mov 		dx,buffer 
-				cmp 		dx, '0'
-				jle 		continue2
+				mov 	dx,buffer 
+				cmp 	dx, '0'
+				jle 	continue2
 				
 				;cmp 	dx, 'Z'
 				;jg 		continue_3
 				;sub 	dx, 48
 				
-				mov 		dh, 0      
-				mov 		ax, current_copter_row
-				mov 		print_row, ax
-				mov 		ax, row
-				add 		print_row, ax
-				mov 		ax, current_copter_col
-				mov 		print_col, ax
-				mov 		ax, col
-				add 		print_col, ax
+				mov 	dh, 0      
+				mov 	ax, current_copter_row
+				mov 	print_row, ax
+				mov 	ax, row
+				add 	print_row, ax
+				mov 	ax, current_copter_col
+				mov 	print_col, ax
+				mov 	ax, col
+				add 	print_col, ax
 				DrawPixel 	dx,print_row,print_col
 						
 			continue2 :
-				mov 		dx, col
-				cmp 		dx, image_width
-				jne 		continue4
+				mov 	dx, col
+				cmp 	dx, image_width
+				jne 	continue4
 				inc		row
-				mov 		ax, -1
-				mov 		col, ax
+				mov 	ax, -1
+				mov 	col, ax
 				
 			continue4 :
-				inc 		col
-				jmp 		read
+				inc 	col
+				jmp 	read
 	
 		erro:	
+			mov bx, file_handle
+			mov ah, 3eh
+			int 21h
 			ret
 DrawCopter ENDP
 ;-----------------------------------------------------------------------------
@@ -599,47 +603,47 @@ ClearCopter PROC
 		push 	ax
 		push 	bx
 	
-		inc 		image_width ; because the actual width is 1 + image_width
+		inc 	image_width ; because the actual width is 1 + image_width
 	
-		mov 		row, 0
-		mov 		col, 0
+		mov 	row, 0
+		mov 	col, 0
 	
-		mov 		ax, current_copter_row
-		mov 		print_row, ax
+		mov 	ax, current_copter_row
+		mov 	print_row, ax
 	
-		mov 		bx, current_copter_col
-		mov 		print_col, bx
+		mov 	bx, current_copter_col
+		mov 	print_col, bx
 	
 		outerLoop:
 		
 			innerLoop:
 		
 				DrawPixel 0000b, print_row, print_col
-				inc 		col
-				inc 		print_col
+				inc 	col
+				inc 	print_col
 			
-				mov 		ax, col
-				cmp 		ax, image_width
-				jle 		innerLoop
+				mov 	ax, col
+				cmp 	ax, image_width
+				jle 	innerLoop
 			
-			inc 		row
-			inc 		print_row
+			inc 	row
+			inc 	print_row
 			
-			mov 		col, 0
-			mov 		print_col, bx
+			mov 	col, 0
+			mov 	print_col, bx
 			
-			mov 		ax, row
-			cmp 		ax, image_height
-			jle 		outerLoop
+			mov 	ax, row
+			cmp 	ax, image_height
+			jle 	outerLoop
 		
 			
-		dec 		image_width	; undoing change to image_width so that drawCopter can be called again without error
+		dec 	image_width	; undoing change to image_width so that drawCopter can be called again without error
 	
-		mov 		row, 0
-		mov 		col, 0
+		mov 	row, 0
+		mov 	col, 0
 		
-		pop 		bx
-		pop 		ax
+		pop 	bx
+		pop 	ax
 		ret
 ClearCopter ENDP
 
@@ -648,7 +652,10 @@ ClearCopter ENDP
 ;-----------------------------------------------------------------------------
 DetectCollision PROC
 	
-		call pusha
+		push ax
+		push bx
+		push cx
+		push dx
 		
 		
 		;for row:
@@ -713,7 +720,10 @@ DetectCollision PROC
 		collided: 
 			mov detect_collision, 1 
         done:
-        	call popa
+        	pop dx
+        	pop cx
+        	pop bx
+        	pop ax
 			ret
 DetectCollision ENDP
 
@@ -787,7 +797,6 @@ GAMELOOP:
 			cmp bx,1
 			je flag1
 			jmp flag2
-
 	flag1 :	call ClearCopter;Erase the present copter first
 			;call DetectCollision;Check if the pixels around the copter are gonna collide
 			cmp detect_collision, 1
@@ -806,7 +815,7 @@ GAMELOOP:
 	flag3: call ClearCopter;Erase the present copter
 		   ;Check if pixels around the copter are such that collision might occur
 		   ;If yes Kaboom! GAME OVER otherwise keep polling.
-		   ;call DetectCollision
+		   call DetectCollision
 		   
 		   
 		   cmp detect_collision, 1
