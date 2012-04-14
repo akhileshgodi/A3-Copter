@@ -87,6 +87,7 @@
 	obscount4	dw	00h
 	obscount5	dw	00h
 	
+	colorflag	dw	00h
 	count_ dw 00h
 	linecol_ dw 30
 	startcol dw 30
@@ -582,6 +583,9 @@ DrawCurve PROC
 		mov 	linecol,00h
 		mov		lineend,00h
 		mov 	linecolor,1010b
+		cmp colorflag,00h
+		je	nextline
+		mov linecolor,1111b
 		nextline:
 				mov linestart,0
 				mov bl,[si]
@@ -1686,8 +1690,13 @@ START:
 	
 	call setMode
 	
-	;call readanddraw
+;	call readanddraw
+
 ;	call colorscreen
+	call readcurve
+	mov colorflag,1
+	call drawcurve
+	mov colorflag,0
 	call drawa
 	call draw3
 	call drawc
@@ -1718,7 +1727,8 @@ START:
 	; reset mouse and get its status: 
 	mov ax, 0
 	int 33h
-
+	
+	call clearscreen
 	call NewGame
 		
 		; display mouse cursor: 
