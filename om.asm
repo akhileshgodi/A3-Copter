@@ -32,9 +32,12 @@
 	image_width dw 29    ; actual length in the image is 30
 	image_height dw 15
 	image_file 	db "heli.txt", 0 ; Place the heli.txt file in the MASM FOLDER
+	image_file_2 db "heli2.txt", 0
+	turn 		dw 0
 	file_handle dw ?
 	buffer 		dw ?
-	msg 		db " press any key.... $"
+	msg 		db "GAME OVER$"
+	gameOverMsg db "GAME OVER$"
 	col_copter	dw	00h				;REUSED - Rename
 	row_copter	dw	00h				;REUSED - Rename
 	ncol		dw		00h
@@ -531,14 +534,26 @@ DrawCopter PROC
 		mov print_row, 0
 		mov print_col, 0
 		
+		
+		cmp turn, 0
+		jne otherFile
 		; Opening the file for reading - NOTE : The file must be in the appropriate folder
 		mov 	al,0        
 		mov 	dx,offset image_file
 		mov 	ah,03dh
 		int 	21h
+		mov 	turn, 1
+		jmp begin
 		
+		otherFile :
+			mov 	al,0        
+			mov 	dx,offset image_file_2
+			mov 	ah,03dh
+			int 	21h
+			mov 	turn, 0
+			
 		; If file is not read, jump to error
-		
+		begin:
 		jc 		erro
 		mov 	file_handle,ax 
 	
@@ -740,7 +755,89 @@ DetectCollision PROC
         	pop ax
 			ret
 DetectCollision ENDP
+gameOverProc PROC
 
+	call ClearScreen
+	;Go back to the normal mode!
+	mov al,03h
+	mov ah, 0
+	int 10h
+	
+	;mov ah, 03h 
+	;int 10h
+				
+	;mov ah, 2
+	;mov dh, 15
+	;mov dl, 30
+	;mov bh, 0
+	;int 10h
+		
+	mov dx, offset gameOverMsg
+	mov ah, 09
+	int 21h
+				
+	;mov ah, 0
+	;int 16h
+	RET
+gameOverProc ENDP
+
+ClearScreen PROC
+		comment/*
+		int i = currentrow
+		int j = currentcol
+		while( i <  copterwidth )
+		{
+			while ( j < copterheight )
+			{
+				clear pixel i,j
+				j++
+			}
+			i++
+			j = currentcol
+		}/*
+		push 	ax
+		push 	bx
+	
+	
+		mov 	row, 0
+		mov 	col, 0
+	
+		mov 	ax, 0
+		mov 	print_row, ax
+	
+		mov 	bx, 0
+		mov 	print_col, bx
+	
+		outerLoop1:
+		
+			innerLoop1:
+		
+				DrawPixel 0000b, print_row, print_col
+				inc 	col
+				inc 	print_col
+			
+				mov 	ax, col
+				cmp 	ax, 320	
+				jle 	innerLoop1
+			
+			inc 	row
+			inc 	print_row
+			
+			mov 	col, 0
+			mov 	print_col, bx
+			
+			mov 	ax, row
+			cmp 	ax, 200
+			jle 	outerLoop1
+		
+	
+		mov 	row, 0
+		mov 	col, 0
+		
+		pop 	bx
+		pop 	ax
+		ret
+ClearScreen ENDP
 
 ;-----------------------------------------------------------------------------
 ; PUSH ALL REGISTERS
@@ -824,24 +921,25 @@ GAMELOOP:
 			jmp flag2
 	flag1 :	call DetectCollision;Check if the pixels around the copter are gonna collide
 			cmp detect_collision, 1
-		   	je Text
+		   	je GameOver
 			;If yes Kaboom! GAME OVER otherwise keep polling.
 			call ClearCopter;Erase the present copter first
 			mov dx,current_copter_row
 			dec dx	;TODO : Adjust accordingly so that the speed does not become horrible 
+			
 			mov current_copter_row,dx
 			call DrawCopter
 			;call delay
 			jmp skip
 	flag2: cmp bx,2
 		   jne flag3
-		   jmp Text
+		   jmp GameOver
 		   
 	flag3: ;Check if pixels around the copter are such that collision might occur
 		   ;If yes Kaboom! GAME OVER otherwise keep polling.
 		   call DetectCollision
 		   cmp detect_collision, 1
-		   je Text
+		   je GameOver
 		   call ClearCopter;Erase the present copter
 		   mov dx, current_copter_row
 		   inc dx		;Falling down : TODO - Adjust gravity accordingly.
@@ -869,27 +967,8 @@ GAMELOOP:
 
 	JMP GAMELOOP
 
-TEXT:	
-	;Go back to the normal mode!
-	mov al,03h
-	mov ah, 0
-	int 10h
-	
-	mov ax, 03h 
-	int 10h
-				
-	mov ah, 1
-	mov ch, 0
-	mov cl, 8
-	int 10h
-		
-	lea dx, msg
-	mov ax, 09
-	int 21h
-				
-	mov ah, 0
-	int 16h
-
+GameOver:	
+	call gameOverProc
 
 	mov cx, 4c00h
 	int 21h
