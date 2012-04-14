@@ -40,6 +40,8 @@
 	gameOverMsg db "GAME OVER$"
 	newGameMsg db "- New Game$"
 	exitGameMsg db "- Exit Game$"
+	scoreMsg db "Score$"
+	score 		dw 0
 	
 	col_copter	dw	00h				;REUSED - Rename
 	row_copter	dw	00h				;REUSED - Rename
@@ -111,8 +113,7 @@
 	Buttons      DW     0           ; mouse buttons status
 	FColor       DB    14           ; foreground color
 	BColor       DB     1           ; background color
-	
-	;Notes for Sound
+
 	C 	dw 	4560
 	C1 	dw 	4304
 	D 	dw 	4063
@@ -126,8 +127,6 @@
 	A1 	dw 	2559
 	B 	dw 	2415
 
-
-
 ;-----------------------------------------------------------------------------
 ;								CODE SEGMENT
 ;-----------------------------------------------------------------------------
@@ -137,6 +136,13 @@
 ;-----------------------------------------------------------------------------
 ;							PROCEDURES AND MACROS
 ;-----------------------------------------------------------------------------
+movCursor macro row, col
+	mov ah, 2
+	mov dh, row
+	mov dl, col
+	mov bh, 0
+	int 10h
+endm
 readanddraw	proc
 	
 	push ax
@@ -625,7 +631,7 @@ DrawCurve ENDP
 ;	THE DELAY PROCEDURE
 ;-----------------------------------------------------------------------------
 Delay	PROC
-		push ax
+	push ax
     push bx
     push cx
     push dx
@@ -649,7 +655,7 @@ Delay	PROC
     pop bx
     pop ax
     
-    ret 
+    ret
 Delay	ENDP
 ;-----------------------------------------------------------------------------
 ;	PROCEDURE TO MOVE THE FRAME AND THE OBSTACLE
@@ -1371,62 +1377,27 @@ DetectCollision PROC
 			ret
 DetectCollision ENDP
 gameOverProc PROC
-
-	;call ClearScreen
-	;Go back to the normal mode!
-	;mov al,03h
-	;mov ah, 0
-	;int 10h
-	
-	;mov ah, 03h 
-	;int 10h
 				
-	mov ah, 2
-	mov dh, 10
-	mov dl, 14
-	mov bh, 0
-	int 10h
-	
-	;mov startcol, 100
-	;mov startrow, 60
-	;mov endrow, 150
-	;mov endcol, 200
-	;mov colr, 1110b
-	
-	;call drawline
+	movCursor 10, 14
 		
 	mov dx, offset gameOverMsg
 	mov ah, 09
 	int 21h
 	
-	mov ah, 2
-	mov dh, 12
-	mov dl, 14
-	mov bh, 0
-	int 10h
+	movCursor 12, 14
 	
 	mov dx, offset newGameMsg
 	mov ah, 09
 	int 21h
 	
-	mov ah, 2
-	mov dh, 14
-	mov dl, 14
-	mov bh, 0
-	int 10h
+	movCursor 14, 14
 	
 	mov dx, offset exitGameMsg
 	mov ah, 09
 	int 21h
 	
-	mov ah, 2
-	mov dh, 24
-	mov dl, 0
-	mov bh, 0
-	int 10h
-				
-	;mov ah, 0
-	;int 16h
+	movCursor 24, 0
+
 	RET
 gameOverProc ENDP
 
@@ -1550,7 +1521,7 @@ resetAll proc
 	mov endrow		, 00h
 	mov endcol		,	00H
 	mov colr		, 1110b
-
+	mov score, 0
 
 
 	ret
@@ -1563,7 +1534,7 @@ NewGame PROC
 
 	;call resetAll
 	; disable mouse pointer
-	mov ax, 2					;Enable for dosemu! Freak emulators cup so much! :\
+	mov ax, 2 
 	int 33h
 	call readcurve
 	mov linecolor,1010b
@@ -1617,8 +1588,9 @@ noobject:
 	dummyjmp1 : jmp nextframe
 	flag1 :	call DetectCollision;Check if the pixels around the copter are gonna collide
 			cmp detect_collision, 1
-		   	je GameOver
+		   	je dummyjmp2
 			;If yes Kaboom! GAME OVER otherwise keep polling.
+			inc score
 			call ClearCopter;Erase the present copter first
 			mov dx,current_copter_row
 			dec dx	;TODO : Adjust accordingly so that the speed does not become horrible 
@@ -1630,8 +1602,8 @@ noobject:
 			jmp skip
 	flag2: cmp bx,2
 		   jne flag3
+		   dummyjmp2 : jmp GameOver
 		   
-	
 	pause : ;call delay
 			mov ax,3
 			int 33h
@@ -1644,6 +1616,7 @@ noobject:
 		   call DetectCollision
 		   cmp detect_collision, 1
 		   je GameOver
+		   inc score
 		   call ClearCopter;Erase the present copter
 		   mov dx, current_copter_row
 		   inc dx		;Falling down : TODO - Adjust gravity accordingly.
@@ -1655,7 +1628,17 @@ noobject:
 			
 			;*******************************************
 			
+			;print score
+			movCursor 5, 1
 			
+			mov dx, offset scoreMsg
+			mov ah, 09
+			int 21h
+			
+			movCursor 6, 2
+			
+			mov cx, score
+			call printNumber
 			
 			cmp count2,320
 			jbe	dummyjmp1
@@ -1677,7 +1660,38 @@ GameOver:
 
 	ret
 NewGame ENDP
+;------------------------------------------------------------------------------
+;	 Prints the number in decimal form on the screen
+;    Requires cx to have the number to be printed
+;    Requires p_x,p_y to have the coordinates where it has to be printed
+;-------------------------------------------------------------------------------
+printNumber proc near
+        mov ax,cx
+        mov cx,10
+        mov bx,0
+  
+         
+        sstack:          
+            mov dx, 0
+            div cx   
+            add dx, '0'
+            push dx
+            inc bx
+    
+            cmp ax, 0                       
+                jnz sstack
+                   
+        print1:
+            pop dx
+            mov ah,2 
+            int 21h  
+        
+            dec bx
+            cmp bx,0
+                jnz print1
 
+        ret
+printNumber endp
 
 MakeSound macro note
 		local pause1,pause2
@@ -1712,7 +1726,6 @@ MakeSound macro note
         out     61h, al         ; Send new value.
 ENDM
 
-
 ;*****************************************************************************
 ; THE GAME LOOP IS HERE
 ;*****************************************************************************
@@ -1724,7 +1737,6 @@ START:
 	mov es, ax
 	
 	call setMode
-
 	call readcurve
 	mov colorflag,1
 	call drawcurve
@@ -1740,7 +1752,6 @@ START:
 	
 	mov ax, 0
 	int 33h
-	
 	mov ax, 1
 	int 33h
 	
@@ -1749,12 +1760,13 @@ START:
 		int 33h
 		cmp bx, 1
 		jne polla
-		
 	call ClearScreen
 	loopa:
 	call resetAll
 	mov current_copter_row, 100
 	mov current_copter_col, 70
+	
+	
 	
 	; reset mouse and get its status: 
 	mov ax, 0
@@ -1763,13 +1775,12 @@ START:
 	call clearscreen
 	call NewGame
 		
-	mov ax ,0
-	int 33h
-	
-	
+		; display mouse cursor: 
+
+	mov ax, 0
+	int 33h 
 	mov ax, 1 
 	int 33h
-	
 	pollloop :
 		mov ax, 3
 		int 33h
@@ -1788,6 +1799,7 @@ START:
 		cmp dx, 120
 		jge pollloop
 		
+	call HideMouse	
 	call clearScreen
 	
 	mov al,0h
