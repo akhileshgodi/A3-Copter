@@ -87,11 +87,17 @@
 	obscount4	dw	00h
 	obscount5	dw	00h
 	
+	count_ dw 00h
+	linecol_ dw 30
 	startcol dw 30
 	startrow	dw 00h
 	endrow		dw 00h
 	endcol		dw	00H
 	colr		db  1110b
+	row3	dw 00h
+	crow	dw	00h
+	toptitle	db	320 dup(0)
+	titlefile	db	"curve3.txt"
 
 	AnyKey       DB     17,"press any key ..."
 	NoMouse      DB     29,"mouse driver is not installed"
@@ -115,7 +121,411 @@
 ;-----------------------------------------------------------------------------
 ;							PROCEDURES AND MACROS
 ;-----------------------------------------------------------------------------
+readanddraw	proc
+	
+	push ax
+	push bx
+	push cx
+	push dx
+	
+	mov al,2
+	mov dx,offset titlefile
+	mov ah,3dh
+	int 21h
+	mov bx,ax
+	mov cx,320
+	mov dx,offset toptitle
+	mov ah,3fh
+	int 21h
 
+	mov ah,3eh
+	int 21h
+
+	lea si,toptitle
+	mov startcol,00h
+	mov endcol,00h
+	mov colr,1111b
+nextl_:
+	mov startrow,0
+	mov bl,[si]
+	mov bh,00h
+	mov endrow,bx
+	inc si
+	call drawline
+	
+	mov startrow,bx
+	add startrow,154
+	mov endrow,200
+	call drawline
+
+	inc startcol
+	inc endcol
+	cmp endcol,320
+	jb nextl_
+	
+
+	pop dx
+	pop cx
+	pop bx
+	pop ax
+	ret
+readanddraw	endp
+drawa	proc
+	mov cx,linecol_
+	mov startcol,cx
+
+nextline1:
+	mov cx,startcol
+	mov dx,60
+	mov al,0100b
+	mov ah,0Ch
+
+nextcol1:
+	mov count_,00h
+	inc cx
+nextrow1:
+	int 10h
+	inc dx
+	inc count_
+	cmp count_,2
+	jbe nextrow1
+
+	cmp cx,43
+	jbe nextcol1
+	
+	inc startcol
+	cmp startcol,33
+	jbe nextline1
+
+	mov cx,linecol_
+	mov startcol,cx
+
+nextline2:
+	mov cx,startcol
+	mov dx,60
+	mov al,0100b
+	mov ah,0Ch
+
+nextcol2:
+	mov count_,00h
+	dec cx
+nextrow2:
+	int 10h
+	inc dx
+	inc count_
+	cmp count_,2
+	jbe nextrow2
+
+	cmp cx,20
+	jge nextcol2
+	
+	inc startcol
+	cmp startcol,33
+	jbe nextline2
+
+
+	mov dx,80
+
+nextrow3:
+	mov cx,25
+nextcol3:
+	int 10h
+	inc cx
+	cmp cx,40
+	jbe nextcol3
+	inc dx
+	cmp dx,75
+	jbe nextrow3
+	ret
+drawa	endp
+
+draw3 proc
+	mov cx,55
+	mov al,0010b
+	mov ah,0ch
+	mov dx,60
+nextrow6:
+	mov cx,55
+nextcol6:
+	int 10h
+	inc cx
+	cmp cx,75
+	jbe nextcol6
+
+	inc dx
+	cmp dx,63
+	jbe nextrow6
+	
+	mov row3,60
+nextline7:
+	mov cx,75
+	mov dx,row3
+nextpx1:
+	int 10h
+	dec cx
+	inc dx
+	cmp cx,55
+	jge nextpx1
+	inc row3
+	cmp row3,63
+	jbe nextline7
+	
+	
+	sub dx,4
+	mov bx,dx
+	sub dx,3
+	mov row3,dx
+nextline8:
+	mov cx,55
+	mov dx,row3
+nextpx2:
+	int 10h
+	inc cx
+	inc dx
+	cmp cx,75
+	jbe nextpx2
+	inc row3
+	cmp row3,bx
+	jbe nextline8
+	
+	sub dx,2
+	mov bx,dx
+	sub dx,3
+nextline9:
+	mov cx,75
+nextcol9:
+	int 10h
+	dec cx
+	cmp cx,55
+	jge nextcol9
+	inc dx
+	cmp dx,bx
+	jbe nextline9
+	ret
+
+draw3	endp
+drawc	proc
+	mov colr,0100b
+
+	mov startcol,100
+	mov endcol,103
+	mov startrow,60
+	mov endrow,100
+	call drawline
+
+	mov startcol,103
+	mov endcol,120
+	mov startrow,60
+	mov endrow,63
+	call drawline
+
+	mov startcol,103
+	mov endcol,120
+	mov startrow,97
+	mov endrow,100
+	call drawline
+	ret
+
+drawc	endp
+
+drawo	proc
+	mov colr,0001b
+
+	mov startcol,125
+	mov endcol,127
+	mov startrow,60
+	mov endrow,100
+	call drawline
+
+	mov startcol,143
+	mov endcol,145
+	mov startrow,60
+	mov endrow,100
+	call drawline
+
+	mov startcol,127
+	mov endcol,143
+	mov startrow,60
+	mov endrow,63
+	call drawline
+
+	mov startcol,127
+	mov endcol,143
+	mov startrow,97
+	mov endrow,100
+	call drawline
+
+
+	ret
+drawo	endp
+
+drawp	proc
+	mov colr,0100b
+
+	mov startcol,150
+	mov endcol,153
+	mov startrow,60
+	mov endrow,101
+	call drawline
+
+	mov startcol,153
+	mov endcol,170
+	mov startrow,60
+	mov endrow,63
+	call drawline
+
+	mov startcol,167
+	mov endcol,170
+	mov startrow,60
+	mov endrow,80
+	call drawline
+
+	mov startcol,153
+	mov endcol,170
+	mov startrow,77
+	mov endrow,80
+	call drawline
+	ret
+drawp	endp
+
+drawt	proc
+	mov colr,0100b
+
+	mov startcol,175
+	mov endcol,195
+	mov startrow,60
+	mov endrow,63
+	call drawline
+
+	mov startcol,184
+	mov endcol,187
+	mov startrow,60
+	mov endrow,101
+	call drawline
+
+	ret
+drawt	endp
+
+drawe	proc
+	mov colr,1111b
+
+	mov startcol,200
+	mov endcol,203
+	mov startrow,60
+	mov endrow,100
+	call drawline
+
+	mov startcol,200
+	mov endcol,220
+	mov startrow,60
+	mov endrow,63
+	call drawline
+
+	mov startcol,200
+	mov endcol,220
+	mov startrow,97
+	mov endrow,100
+	call drawline
+
+	mov startcol,200
+	mov endcol,210
+	mov startrow,79
+	mov endrow,82
+	call drawline
+
+	ret
+drawe	endp
+
+drawr	proc
+	mov colr,0001b
+
+	mov startcol,225
+	mov endcol,235
+	mov startrow,30
+	mov endrow,130
+	call drawline
+
+	mov startcol,235
+	mov endcol,285
+	mov startrow,30
+	mov endrow,40
+	call drawline
+
+	mov startcol,275
+	mov endcol,285
+	mov startrow,30
+	mov endrow,80
+	call drawline
+
+	mov startcol,225
+	mov endcol,285
+	mov startrow,70
+	mov endrow,80
+	call drawline
+	
+	mov al,0001h
+	mov ah,0ch
+	mov dx,65
+	mov cx,225
+	mov crow,63
+nextpxl:
+	int 10h
+	inc dx
+	inc cx
+	cmp dx,150
+	jg	nextline_
+	cmp cx,305
+	jg nextline_
+	jmp nextpxl
+
+nextline_:
+	inc crow
+	mov dx,crow
+	mov cx,225
+	cmp crow,77
+	jbe nextpxl
+
+
+	ret
+
+drawr	endp
+drawline	proc
+	mov cx,startcol
+	mov al,colr
+	mov ah,0ch
+nextcl:
+	mov dx,startrow
+nextrw:
+	int 10h
+	inc dx
+	cmp dx,endrow
+	jbe nextrw
+
+	inc cx
+	cmp cx,endcol
+	jbe nextcl
+
+	ret
+drawline endp
+	
+colorscreen	proc
+	mov dx,0
+nextrow4:
+	mov cx,0
+	mov al,1110b
+	mov ah,0ch
+
+nextcol4:
+	int 10h
+	inc cx
+	cmp cx,320
+	jb nextcol4
+	
+	inc dx
+	cmp dx,200
+	jb nextrow4
+	ret
+colorscreen endp
 ;-----------------------------------------------------------------------------
 ;	DRAW A PIXEL - PARAMETERS - COLOR, ROW, COL
 ;-----------------------------------------------------------------------------
@@ -1060,24 +1470,7 @@ ClearScreen PROC
 		ret
 ClearScreen ENDP
 ;------------------------------------------------------
-drawline	proc
-	mov cx,startcol
-	mov al,colr
-	mov ah,0ch
-nextcl:
-	mov dx,startrow
-nextrw:
-	int 10h
-	inc dx
-	cmp dx,endrow
-	jbe nextrw
 
-	inc cx
-	cmp cx,endcol
-	jbe nextcl
-
-	ret
-drawline endp
 ;----------------------------------------------------------	
 resetAll proc
 
@@ -1291,12 +1684,36 @@ START:
 	mov ds, ax
 	mov es, ax
 	
+	call setMode
+	
+	;call readanddraw
+;	call colorscreen
+	call drawa
+	call draw3
+	call drawc
+	call drawo
+	call drawp
+	call drawt
+	call drawe
+	call drawr
+	
+	mov ax, 0
+	int 33h
+	mov ax, 1
+	int 33h
+	
+	polla:
+		mov ax, 3
+		int 33h
+		cmp bx, 1
+		jne polla
+	call ClearScreen
 	loopa:
 	call resetAll
 	mov current_copter_row, 100
 	mov current_copter_col, 70
 	
-	call setMode
+	
 	
 	; reset mouse and get its status: 
 	mov ax, 0
@@ -1328,6 +1745,7 @@ START:
 		cmp dx, 120
 		jge pollloop
 		
+	call clearScreen
 	mov ax, 4c00h
 	int 21h
 
