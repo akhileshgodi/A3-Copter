@@ -1150,6 +1150,7 @@ DrawCopter PROC
 		;	file_handle dw ?
 		;	buffer dw ?
 		;---------------------------------------------------------------
+		
 		mov row, 0
 		mov col, 0
 		mov print_row, 0
@@ -1220,7 +1221,7 @@ DrawCopter PROC
 			continue4 :
 				inc 	col
 				jmp 	read
-	
+				
 		erro:	
 			mov bx, file_handle
 			mov ah, 3eh
@@ -1231,6 +1232,7 @@ DrawCopter PROC
 			pop ax
 			ret
 DrawCopter ENDP
+
 ;-----------------------------------------------------------------------------
 ; CLEARS THE COPTER FROM THE SCREEN - TAKES CURRENT COORDS FROM GLOBAL DEF
 ;-----------------------------------------------------------------------------
@@ -1693,13 +1695,16 @@ printNumber proc near
         ret
 printNumber endp
 
-MakeSound macro note
-		local pause1,pause2
+MakeSound PROC			;Assumes dx has the note's freq.
+		
+		push ax
+		push bx
+		push cx
 		
         mov     al, 182         ; Prepare the speaker for the
         out     43h, al         ; note.
         
-        mov     ax, note        	; Frequency number (in decimal)
+        mov     ax, dx       	; Frequency number (in decimal)
                                 ; dx will be passed as a parameter - has the ferequency of the sound.
                                 
         out     42h, al         ; Output low byte.
@@ -1724,7 +1729,11 @@ MakeSound macro note
                                 ;  port 61h).-
         and     al, 11111100b   ; Reset bits 1 and 0.
         out     61h, al         ; Send new value.
-ENDM
+        pop cx
+        pop bx
+        pop ax
+        ret
+MakeSound ENDP
 
 ;*****************************************************************************
 ; THE GAME LOOP IS HERE
@@ -1771,7 +1780,7 @@ START:
 	; reset mouse and get its status: 
 	mov ax, 0
 	int 33h
-	
+
 	call clearscreen
 	call NewGame
 		
