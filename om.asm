@@ -38,6 +38,9 @@
 	buffer 		dw ?
 	msg 		db "GAME OVER$"
 	gameOverMsg db "GAME OVER$"
+	newGameMsg db "- New Game$"
+	exitGameMsg db "- Exit Game$"
+	
 	col_copter	dw	00h				;REUSED - Rename
 	row_copter	dw	00h				;REUSED - Rename
 	ncol		dw		00h
@@ -62,8 +65,33 @@
 	count2		dw	00h
 	count3		dw	00h
 	topcurve 	db 320 dup(0)
-	filename 	db "curve1.txt"
+	filename 	db "curve3.txt"
 	randnum	 	db 00h
+
+	obscol1		dw	300
+	obscol2		dw	300
+	obscol3		dw	300
+	obscol4		dw	300
+	obscol5		dw	300
+	rand1		dw	00h
+	rand2		dw	00h
+	rand3		dw	00h
+	rand4		dw	00h
+	rand5		dw	00h
+	obsflag		db 00h
+
+	obsdelay	dw	141
+	obscount1	dw	00h
+	obscount2	dw  00h
+	obscount3	dw	00h
+	obscount4	dw	00h
+	obscount5	dw	00h
+	
+	startcol dw 30
+	startrow	dw 00h
+	endrow		dw 00h
+	endcol		dw	00H
+	colr		db  1110b
 
 	AnyKey       DB     17,"press any key ..."
 	NoMouse      DB     29,"mouse driver is not installed"
@@ -262,6 +290,136 @@ ReadCurve	PROC
 		ret
 ReadCurve	ENDP
 
+randobjects proc
+		cmp obscol1,300
+		jne	obs2
+		cmp obsflag,0
+		je tempjmp1
+		mov obscol1,299
+		mov obscount1,00h
+		call randomnum
+		mov bl,randnum
+		mov bh, 0
+		mov rand1,bx
+		jmp tempjmp1
+		
+obs2:	cmp obscol2,300
+		jne	obs3
+		cmp obsflag,0
+		je tempjmp1
+		mov obscol2,299
+		mov obscount2,00h
+		call randomnum
+		mov bl,randnum
+		mov bh, 0
+		mov rand2,bx
+tempjmp1:	jmp obs6
+
+obs3:	cmp obscol3,300
+		jne	obs4
+		cmp obsflag,0
+		je obs6
+		mov obscol3,299
+		mov obscount3,00h
+		call randomnum
+		mov bl,randnum
+		mov bh, 0
+		mov rand3,bx	
+		jmp obs6
+obs4:
+		cmp obscol4,300
+		jne	obs5
+		cmp obsflag,0
+		je obs6
+		mov obscol4,299
+		mov obscount4,00h
+		call randomnum
+		mov bl,randnum
+		mov bh, 0
+		mov rand4,bx
+		jmp obs6
+obs5:		
+		cmp obscol5,300
+		jne	obs6
+		cmp obsflag,0
+		je obs6
+		mov obscol5,299
+		mov obscount5,00h
+		call randomnum
+		mov bl,randnum
+		mov bh, 0
+		mov rand5,bx
+obs6:	
+		cmp obscol1,300
+		je	nextobs1
+		mov bx,obscol1
+		mov obstaclecol,bx
+		mov bx,rand1
+		mov obsrow,bl
+		call moveobstacle
+		dec obscol1
+		inc obscount1
+		cmp obscount1,320
+		jbe nextobs1
+		mov obscol1,300
+nextobs1:
+		cmp obscol2,300
+		je	nextobs2
+		mov bx,obscol2
+		mov obstaclecol,bx
+		mov bx,rand2
+		mov obsrow,bl
+		call moveobstacle
+		dec obscol2
+		inc obscount2
+		cmp obscount2,320
+		jbe nextobs2
+		mov obscol2,300
+nextobs2:
+		cmp obscol3,300
+		je	nextobs3
+		mov bx,obscol3
+		mov obstaclecol,bx
+		mov bx,rand3
+		mov obsrow,bl
+		call moveobstacle
+		dec obscol3
+		inc obscount3
+		cmp obscount3,320
+		jbe nextobs3
+		mov obscol3,300
+nextobs3:
+		cmp obscol4,300
+		je	nextobs4
+		mov bx,obscol4
+		mov obstaclecol,bx
+		mov bx,rand4
+		mov obsrow,bl
+		call moveobstacle
+		dec obscol4
+		inc obscount4
+		cmp obscount4,320
+		jbe nextobs4
+		mov obscol4,300
+nextobs4:
+		cmp obscol5,300
+		je	goout0
+		mov bx,obscol5
+		mov obstaclecol,bx
+		mov bx,rand5
+		mov obsrow,bl
+		call moveobstacle
+		dec obscol5
+		inc obscount5
+		cmp obscount5,320
+		jbe goout0
+		mov obscol,300
+
+goout0:
+		ret
+
+randobjects	endp
+
 ;-----------------------------------------------------------------------------
 ; Procedure to move the top and bottom curves
 ; checks color of pixels in next column and moves accordingly
@@ -310,16 +468,16 @@ MoveCurve	PROC
 		mov 	cx,col_copter
 		mov 	dx,row_copter
 		int 	10h
-
+	goout:
 		inc 	row_copter
 		mov 	bx,testend
 		cmp 	row_copter,bx
 		jbe 	nextrow
-
+	
 		inc 	col_copter
 		cmp 	col_copter,319
 		jbe 	nextcol
-	goout:
+	
 		ret
 MoveCurve	ENDP
 
@@ -328,22 +486,51 @@ MoveCurve	ENDP
 ; top left pixel passed as obsrow,obscol
 ;-----------------------------------------------------------------------------
 DrawObstacle PROC
-		mov		bh,0
-		mov 	bl,obsrow
-		mov 	count1,00h
-		mov 	linestart,bx
-		add 	bx,55
-		mov 	lineend,bx
-		mov 	bx,obscol
-		mov 	linecol,bx
-	nextline1:
-		call 	DrawVertLine
-		inc 	linecol
-		inc 	count1
-		cmp 	count1,20
-		jbe 	nextline1
 
+		push 	ax
+		push 	bx
+	
+	
+		mov 	row, 0
+		mov 	col, 0
+	
+		mov 	al, obsrow
+		mov 	ah, 0
+		mov 	print_row, ax
+	
+		mov 	bx, obscol
+		mov 	print_col, bx
+	
+		outerLoop4:
+		
+			innerLoop4:
+		
+				DrawPixel 1010b, print_row, print_col
+				inc 	col
+				inc 	print_col
+			
+				mov 	ax, col
+				cmp 	ax, 20
+				jle 	innerLoop4
+			
+			inc 	row
+			inc 	print_row
+			
+			mov 	col, 0
+			mov 	print_col, bx
+			
+			mov 	ax, row
+			cmp 	ax, 55
+			jle 	outerLoop4
+		
+	
+		mov 	row, 0
+		mov 	col, 0
+		
+		pop 	bx
+		pop 	ax
 		ret
+
 DrawObstacle ENDP
 ;-----------------------------------------------------------------------------
 ; MOVES THE OBSTACLE BY ONE COLUMN FORWARD
@@ -757,24 +944,58 @@ DetectCollision PROC
 DetectCollision ENDP
 gameOverProc PROC
 
-	call ClearScreen
+	;call ClearScreen
 	;Go back to the normal mode!
-	mov al,03h
-	mov ah, 0
-	int 10h
+	;mov al,03h
+	;mov ah, 0
+	;int 10h
 	
 	;mov ah, 03h 
 	;int 10h
 				
-	;mov ah, 2
-	;mov dh, 15
-	;mov dl, 30
-	;mov bh, 0
-	;int 10h
+	mov ah, 2
+	mov dh, 10
+	mov dl, 14
+	mov bh, 0
+	int 10h
+	
+	;mov startcol, 100
+	;mov startrow, 60
+	;mov endrow, 150
+	;mov endcol, 200
+	;mov colr, 1110b
+	
+	;call drawline
 		
 	mov dx, offset gameOverMsg
 	mov ah, 09
 	int 21h
+	
+	mov ah, 2
+	mov dh, 12
+	mov dl, 14
+	mov bh, 0
+	int 10h
+	
+	mov dx, offset newGameMsg
+	mov ah, 09
+	int 21h
+	
+	mov ah, 2
+	mov dh, 14
+	mov dl, 14
+	mov bh, 0
+	int 10h
+	
+	mov dx, offset exitGameMsg
+	mov ah, 09
+	int 21h
+	
+	mov ah, 2
+	mov dh, 24
+	mov dl, 0
+	mov bh, 0
+	int 10h
 				
 	;mov ah, 0
 	;int 16h
@@ -838,6 +1059,206 @@ ClearScreen PROC
 		pop 	ax
 		ret
 ClearScreen ENDP
+;------------------------------------------------------
+drawline	proc
+	mov cx,startcol
+	mov al,colr
+	mov ah,0ch
+nextcl:
+	mov dx,startrow
+nextrw:
+	int 10h
+	inc dx
+	cmp dx,endrow
+	jbe nextrw
+
+	inc cx
+	cmp cx,endcol
+	jbe nextcl
+
+	ret
+drawline endp
+;----------------------------------------------------------	
+resetAll proc
+
+
+	mov row, 0
+	mov col, 0
+	mov print_row , 100
+	mov print_col , 100
+	mov current_copter_row , 0  
+	mov current_copter_col, 0
+	mov turn ,0
+	
+	mov col_copter,	00h				;REUSED - Rename
+	mov row_copter,	00h				;REUSED - Rename
+	mov ncol,		00h
+	mov nrow,		00h
+	mov detect_collision, 0
+	mov delay1 , 00h
+	mov delay2 	, 00h
+	mov delay3 	,00h
+	mov delay4 	, 00h
+	mov tempend ,	00h
+	mov tempcol , 00h
+	mov linecol ,  00h
+	mov testend	,00h
+	mov testrow		,	00h
+	mov linecolor	,	00h
+	mov obsrow	,	00h
+	mov obscol	,	00h
+	mov obstaclecol ,	00h
+	mov linestart,	00h
+	mov lineend	,	00h
+	mov count1	,00h
+	mov count2	,	00h
+	mov count3	,	00h
+	mov randnum	 , 00h
+
+	mov obscol1		,	300
+	mov obscol2		,	300
+	mov obscol3	,	300
+	mov obscol4		,	300
+	mov obscol5	,	300
+	mov rand1	,	00h
+	mov rand2	,	00h
+	mov rand3	,	00h
+	mov rand4	,	00h
+	mov rand5	,	00h
+	mov obsflag	, 00h
+
+	mov obsdelay	,141
+	mov obscount1	,	00h
+	mov obscount2	,  00h
+	mov obscount3	,	00h
+	mov obscount4	,	00h
+	mov obscount5	,00h
+	
+	mov startcol, 30
+	mov startrow	, 00h
+	mov endrow		, 00h
+	mov endcol		,	00H
+	mov colr		, 1110b
+
+
+
+	ret
+
+resetAll endp
+
+;-------------------------------------------------------------
+
+NewGame PROC
+
+	;call resetAll
+	; disable mouse pointer
+	mov ax, 2 
+	int 33h
+	call readcurve
+	mov linecolor,1010b
+	mov linecol,50
+	mov linestart,30
+	mov lineend,70
+	
+GAMELOOP:
+	call drawcurve
+	mov obsdelay,81
+		
+	nextobstacle:
+			mov count2,00h
+		
+			mov linecolor,1010b
+			mov obstaclecol,299
+			call randomnum
+			mov bl,randnum
+			mov obsrow,bl
+	nextframe:
+			inc count2
+			mov testrow,00h
+			mov testend,33
+			call movecurve
+			mov testrow,169
+			mov testend,200
+			call movecurve
+		;	call moveobstacle
+			cmp obsdelay,80
+			jbe noobject
+			mov obsdelay,00h
+			call randomnum
+			mov bl,randnum
+			mov bh,00h
+			mov ax,bx
+			mov dl,2
+			div dl
+			mov obsflag,ah
+noobject:	
+			inc obsdelay
+			call randobjects
+			mov obsflag,00h
+		;	dec obstaclecol
+			
+			;*******************************************
+			mov ax,3
+			int 33h
+			cmp bx,1
+			je flag1
+			jmp flag2
+	dummyjmp1 : jmp nextframe
+	flag1 :	call DetectCollision;Check if the pixels around the copter are gonna collide
+			cmp detect_collision, 1
+		   	je GameOver
+			;If yes Kaboom! GAME OVER otherwise keep polling.
+			call ClearCopter;Erase the present copter first
+			mov dx,current_copter_row
+			dec dx	;TODO : Adjust accordingly so that the speed does not become horrible 
+			dec dx
+			
+			mov current_copter_row,dx
+			call DrawCopter
+			;call delay
+			jmp skip
+	flag2: cmp bx,2
+		   jne flag3
+		   jmp GameOver
+		   
+	flag3: ;Check if pixels around the copter are such that collision might occur
+		   ;If yes Kaboom! GAME OVER otherwise keep polling.
+		   call DetectCollision
+		   cmp detect_collision, 1
+		   je GameOver
+		   call ClearCopter;Erase the present copter
+		   mov dx, current_copter_row
+		   inc dx		;Falling down : TODO - Adjust gravity accordingly.
+		   inc dx
+		   mov current_copter_row,dx
+		   call DrawCopter
+		   ;call delay
+	skip:		
+			
+			;*******************************************
+			
+			
+			
+			cmp count2,320
+			jbe	dummyjmp1
+		
+			mov count3,00h
+			mov linecolor,0000b
+			mov linecol,298
+			mov linestart,31
+			mov lineend,169
+	nextl:
+			jmp nextobstacle
+	
+	call DrawCopter
+
+	JMP GAMELOOP
+
+GameOver:	
+	call gameOverProc
+
+	ret
+NewGame ENDP
 
 ;-----------------------------------------------------------------------------
 ; PUSH ALL REGISTERS
@@ -870,107 +1291,44 @@ START:
 	mov ds, ax
 	mov es, ax
 	
+	loopa:
+	call resetAll
 	mov current_copter_row, 100
 	mov current_copter_col, 70
 	
 	call setMode
 	
-	
 	; reset mouse and get its status: 
 	mov ax, 0
 	int 33h
-	cmp ax, 0
 
-	; display mouse cursor: 
+	call NewGame
+		
+		; display mouse cursor: 
+
+	mov ax, 0
+	int 33h 
 	mov ax, 1 
 	int 33h
-	
-	call readcurve
-	mov linecolor,1010b
-	mov linecol,50
-	mov linestart,30
-	mov lineend,70
-	
-GAMELOOP:
-	call drawcurve
+	pollloop :
+		mov ax, 3
+		int 33h
+		cmp bx, 1
+		jne pollloop
+	cmp dx, 96
+	jle pollloop
+	cmp dx,  104
+	jge isexit
 		
-	nextobstacle:
-			mov count2,00h
+	jmp loopa
 		
-			mov linecolor,1010b
-			mov obstaclecol,299
-			call randomnum
-			mov bl,randnum
-			mov obsrow,bl
-	nextframe:
-			inc count2
-			mov testrow,00h
-			mov testend,33
-			call movecurve
-			mov testrow,169
-			mov testend,200
-			call movecurve
-			call moveobstacle
-			dec obstaclecol
-			
-			;*******************************************
-			mov ax,3
-			int 33h
-			cmp bx,1
-			je flag1
-			jmp flag2
-	flag1 :	call DetectCollision;Check if the pixels around the copter are gonna collide
-			cmp detect_collision, 1
-		   	je GameOver
-			;If yes Kaboom! GAME OVER otherwise keep polling.
-			call ClearCopter;Erase the present copter first
-			mov dx,current_copter_row
-			dec dx	;TODO : Adjust accordingly so that the speed does not become horrible 
-			
-			mov current_copter_row,dx
-			call DrawCopter
-			;call delay
-			jmp skip
-	flag2: cmp bx,2
-		   jne flag3
-		   jmp GameOver
-		   
-	flag3: ;Check if pixels around the copter are such that collision might occur
-		   ;If yes Kaboom! GAME OVER otherwise keep polling.
-		   call DetectCollision
-		   cmp detect_collision, 1
-		   je GameOver
-		   call ClearCopter;Erase the present copter
-		   mov dx, current_copter_row
-		   inc dx		;Falling down : TODO - Adjust gravity accordingly.
-		   mov current_copter_row,dx
-		   call DrawCopter
-		   ;call delay
-	skip:		
-			
-			;*******************************************
-			
-			
-			
-			cmp count2,320
-			jbe	nextframe
+	isexit :
+		cmp dx, 112
+		jle pollloop
+		cmp dx, 120
+		jge pollloop
 		
-			mov count3,00h
-			mov linecolor,0000b
-			mov linecol,298
-			mov linestart,31
-			mov lineend,169
-	nextl:
-			jmp nextobstacle
-	
-	call DrawCopter
-
-	JMP GAMELOOP
-
-GameOver:	
-	call gameOverProc
-
-	mov cx, 4c00h
+	mov ax, 4c00h
 	int 21h
 
 END START
