@@ -1689,8 +1689,7 @@ START:
 	mov es, ax
 	
 	call setMode
-	
-;	call readanddraw
+	call readanddraw
 
 ;	call colorscreen
 	call readcurve
