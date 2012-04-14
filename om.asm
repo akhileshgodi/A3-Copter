@@ -111,6 +111,21 @@
 	Buttons      DW     0           ; mouse buttons status
 	FColor       DB    14           ; foreground color
 	BColor       DB     1           ; background color
+	
+	;Notes for Sound
+	C 	dw 	4560
+	C1 	dw 	4304
+	D 	dw 	4063
+	D1 	dw 	3834
+	E 	dw 	3619
+	F 	dw 	3416
+	F1 	dw 	3224
+	G 	dw 	3043
+	G1 	dw 	2873
+	A 	dw 	2711
+	A1 	dw 	2559
+	B 	dw 	2415
+
 
 
 ;-----------------------------------------------------------------------------
@@ -610,32 +625,31 @@ DrawCurve ENDP
 ;	THE DELAY PROCEDURE
 ;-----------------------------------------------------------------------------
 Delay	PROC
-		mov 	delay1,00h
-		waitloop1:
-				inc delay1
-				mov delay2,00h
-		waitloop2:		
-				inc delay2
-				mov delay3,00h
-
-		waitloop3:
-				inc delay3
-				mov delay4,00h
-		waitloop4:	
-				inc delay4
-				cmp delay4,5000
-				jbe waitloop4
-		
-		cmp 	delay3,5000
-		jbe 	waitloop3
-
-		cmp 	delay2,5000
-		jbe 	waitloop2
-
-		cmp 	delay1,5000
-		jbe		waitloop1
-
-		ret
+		push ax
+    push bx
+    push cx
+    push dx
+    
+    mov dx,0000H
+    mov cx,0000H
+    delaying2:
+    inc bx
+    delaying:   
+            inc dx
+        	delaying1:   
+                inc cx
+             cmp cx,7FEEH
+             jl delaying1
+    	    cmp dx,2FFFH
+            jl delaying
+        	cmp bx,5
+        	jl delaying2
+    pop dx
+    pop cx
+    pop bx
+    pop ax
+    
+    ret 
 Delay	ENDP
 ;-----------------------------------------------------------------------------
 ;	PROCEDURE TO MOVE THE FRAME AND THE OBSTACLE
@@ -1549,7 +1563,7 @@ NewGame PROC
 
 	;call resetAll
 	; disable mouse pointer
-	mov ax, 2 
+	mov ax, 2					;Enable for dosemu! Freak emulators cup so much! :\
 	int 33h
 	call readcurve
 	mov linecolor,1010b
@@ -1616,7 +1630,14 @@ noobject:
 			jmp skip
 	flag2: cmp bx,2
 		   jne flag3
-		   jmp GameOver
+		   
+	
+	pause : ;call delay
+			mov ax,3
+			int 33h
+	looped:	cmp bx,1
+			je flag1
+			jmp pause
 		   
 	flag3: ;Check if pixels around the copter are such that collision might occur
 		   ;If yes Kaboom! GAME OVER otherwise keep polling.
@@ -1657,26 +1678,40 @@ GameOver:
 	ret
 NewGame ENDP
 
-;-----------------------------------------------------------------------------
-; PUSH ALL REGISTERS
-;-----------------------------------------------------------------------------
-pusha PROC
- 		push ax
- 		push bx
- 		push cx
- 		push dx
- 		ret
-pusha ENDP
-;-----------------------------------------------------------------------------
-; POP ALL REGISTERS - reverse order
-;-----------------------------------------------------------------------------
-popa PROC
- 		pop dx
- 		pop cx
- 		pop bx
- 		pop ax
- 		ret
-popa ENDP
+
+MakeSound macro note
+		local pause1,pause2
+		
+        mov     al, 182         ; Prepare the speaker for the
+        out     43h, al         ; note.
+        
+        mov     ax, note        	; Frequency number (in decimal)
+                                ; dx will be passed as a parameter - has the ferequency of the sound.
+                                
+        out     42h, al         ; Output low byte.
+        mov     al, ah          ; Output high byte.
+        out     42h, al 
+        in      al, 61h         ; Turn on note (get value from
+                                ;  port 61h).
+        or      al, 00000011b   ; Set bits 1 and 0.
+        out     61h, al         ; Send new value.
+        mov     bx, 10          ; Pause for duration of note.
+
+		pause1:
+		mov     cx, 65535
+
+		pause2:
+        dec     cx
+        jne     pause2
+        dec     bx
+        jne     pause1
+        in      al, 61h         ; Turn off note (get value from
+                  
+                                ;  port 61h).-
+        and     al, 11111100b   ; Reset bits 1 and 0.
+        out     61h, al         ; Send new value.
+ENDM
+
 
 ;*****************************************************************************
 ; THE GAME LOOP IS HERE
@@ -1689,9 +1724,7 @@ START:
 	mov es, ax
 	
 	call setMode
-	call readanddraw
 
-;	call colorscreen
 	call readcurve
 	mov colorflag,1
 	call drawcurve
@@ -1707,6 +1740,7 @@ START:
 	
 	mov ax, 0
 	int 33h
+	
 	mov ax, 1
 	int 33h
 	
@@ -1715,13 +1749,12 @@ START:
 		int 33h
 		cmp bx, 1
 		jne polla
+		
 	call ClearScreen
 	loopa:
 	call resetAll
 	mov current_copter_row, 100
 	mov current_copter_col, 70
-	
-	
 	
 	; reset mouse and get its status: 
 	mov ax, 0
@@ -1730,12 +1763,13 @@ START:
 	call clearscreen
 	call NewGame
 		
-		; display mouse cursor: 
-
-	mov ax, 0
-	int 33h 
+	mov ax ,0
+	int 33h
+	
+	
 	mov ax, 1 
 	int 33h
+	
 	pollloop :
 		mov ax, 3
 		int 33h
@@ -1755,6 +1789,7 @@ START:
 		jge pollloop
 		
 	call clearScreen
+	
 	mov ax, 4c00h
 	int 21h
 
