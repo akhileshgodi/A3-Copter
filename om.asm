@@ -1587,11 +1587,12 @@ noobject:
 			cmp bx,1
 			je flag1
 			jmp flag2
-	dummyjmp1 : jmp nextframe
 	flag1 :	call DetectCollision;Check if the pixels around the copter are gonna collide
 			cmp detect_collision, 1
 		   	je dummyjmp2
 			;If yes Kaboom! GAME OVER otherwise keep polling.
+			mov dx,9100
+			call MakeSound
 			inc score
 			call ClearCopter;Erase the present copter first
 			mov dx,current_copter_row
@@ -1602,9 +1603,11 @@ noobject:
 			call DrawCopter
 			;call delay
 			jmp skip
+			
+		   dummyjmp2 : jmp GameOver
+		   dummyjmp1 : jmp nextframe
 	flag2: cmp bx,2
 		   jne flag3
-		   dummyjmp2 : jmp GameOver
 		   
 	pause : ;call delay
 			mov ax,3
@@ -1618,6 +1621,8 @@ noobject:
 		   call DetectCollision
 		   cmp detect_collision, 1
 		   je GameOver
+		   mov dx,9100
+		   call MakeSound
 		   inc score
 		   call ClearCopter;Erase the present copter
 		   mov dx, current_copter_row
