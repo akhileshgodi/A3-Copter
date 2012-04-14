@@ -114,7 +114,7 @@
 	FColor       DB    14           ; foreground color
 	BColor       DB     1           ; background color
 
-	C 	dw 	4560
+	C 	dw 	9100
 	C1 	dw 	4304
 	D 	dw 	4063
 	D1 	dw 	3834
@@ -1644,7 +1644,11 @@ noobject:
 			
 			movCursor 6, 2
 			
-			mov cx, score
+			mov dx, 0
+			mov ax, score
+			mov cx, 10
+			div cx
+			mov cx, ax
 			call printNumber
 			
 			cmp count2,320
@@ -1719,7 +1723,7 @@ MakeSound PROC			;Assumes dx has the note's freq.
                                 ;  port 61h).
         or      al, 00000011b   ; Set bits 1 and 0.
         out     61h, al         ; Send new value.
-        mov     bx, 10          ; Pause for duration of note.
+        mov     bx, 1          ; Pause for duration of note.
 
 		pause1:
 		mov     cx, 65535
