@@ -41,7 +41,13 @@
 	newGameMsg db "- New Game$"
 	exitGameMsg db "- Exit Game$"
 	scoreMsg db "Score$"
+	bestscoreMsg db "Best Score$"
+	
 	score 		dw 0
+	
+	bestScore	dw	?
+	handle1 		dw 	?
+	bestScoreFilename	db	"score.txt"
 	
 	col_copter	dw	00h				;REUSED - Rename
 	row_copter	dw	00h				;REUSED - Rename
@@ -1564,7 +1570,7 @@ GAMELOOP:
 	call drawcurve
 	mov obsdelay,81
 		
-	nextobstacle:
+		nextobstacle:
 			mov count2,00h
 		
 			mov linecolor,1010b
@@ -1610,6 +1616,13 @@ noobject:
 			mov dx,10000
 			call MakeSound
 			inc score
+			mov dx, 0
+		   	mov ax, score
+		   	mov cx, 10
+		   	div cx
+			cmp bestScore,ax
+			jle changebestScore
+	changedbest:		
 			call ClearCopter;Erase the present copter first
 			mov dx,current_copter_row
 			dec dx	;TODO : Adjust accordingly so that the speed does not become horrible 
@@ -1619,9 +1632,16 @@ noobject:
 			call DrawCopter
 			;call delay
 			jmp skip
-			
+			;--------------------------------------------
+		   changebestScore:
+		   	mov bestScore,ax
+		   	jmp changedbest
+		   changebestScore1:
+		   	mov bestScore,ax
+		    jmp changedbest1
+		  			
 		   dummyjmp2 : jmp GameOver
-		   dummyjmp1 : jmp nextframe
+		    ;--------------------------------------------
 	flag2: cmp bx,2
 		   jne flag3
 		   
@@ -1631,21 +1651,34 @@ noobject:
 	looped:	cmp bx,1
 			je flag1
 			jmp pause
-		   
+			
 	flag3: ;Check if pixels around the copter are such that collision might occur
 		   ;If yes Kaboom! GAME OVER otherwise keep polling.
 		   call DetectCollision
 		   cmp detect_collision, 1
-		   je GameOver
+		   je dummyjmp2
 		   mov dx,9100
 		   call MakeSound
 		   inc score
+		   mov dx, 0
+		   mov ax, score
+		   mov cx, 10
+		   div cx
+		   cmp bestScore,ax
+		   jle changebestScore1
+	changedbest1:		
 		   call ClearCopter;Erase the present copter
 		   mov dx, current_copter_row
 		   inc dx		;Falling down : TODO - Adjust gravity accordingly.
 		   inc dx
 		   mov current_copter_row,dx
 		   call DrawCopter
+		   jmp skip
+		   ;-----------------------------
+		   
+		   dummyjmp1 : jmp nextframe
+		   
+		   ;----------------------------
 		   ;call delay
 	skip:		
 			
@@ -1667,6 +1700,16 @@ noobject:
 			mov cx, ax
 			call printNumber
 			
+			movCursor 8, 1
+			
+			mov dx, offset bestscoreMsg
+			mov ah, 09
+			int 21h
+			
+			movCursor 9,2
+			mov cx,bestScore
+			call printNumber
+			
 			cmp count2,320
 			jbe	dummyjmp1
 		
@@ -1682,11 +1725,54 @@ noobject:
 
 	JMP GAMELOOP
 
-GameOver:	
+GameOver:
+	call resetBestInFile	
 	call gameOverProc
 
 	ret
 NewGame ENDP
+
+resetBestInFile PROC
+
+	push ax
+	push bx
+	push cx
+	push dx
+	
+	mov dx,offset bestScoreFilename
+	mov ah, 41h
+	
+	mov ah, 3ch
+	mov cx, 0
+	mov dx, offset bestScoreFilename
+	mov ah, 3ch
+	int 21h
+
+
+	mov handle1,ax
+	mov bx,handle1
+	mov al,2
+	mov dx,offset bestScoreFilename
+	mov ah, 3dh
+	int 21h
+	
+	mov handle1,ax
+	mov bx,ax
+	mov cx,2
+	mov dx,offset bestScore
+	mov ah,40h
+	int 21h
+	
+	mov bx,handle1
+	mov ah,3eh
+	int 21h 
+	
+	pop dx
+	pop cx
+	pop bx
+	pop ax
+	ret
+resetBestinFile ENDP
 ;------------------------------------------------------------------------------
 ;	 Prints the number in decimal form on the screen
 ;    Requires cx to have the number to be printed
@@ -1760,6 +1846,36 @@ MakeSound PROC			;Assumes dx has the note's freq.
         ret
 MakeSound ENDP
 
+ReadBestScore PROC
+
+	push ax
+	push bx
+	push cx
+	push dx
+	
+	mov al,2
+	mov dx,offset bestScoreFilename
+	mov ah, 3dh
+	int 21h
+	
+	mov handle1,ax
+	mov bx,handle1
+	mov dx,offset bestScore
+	mov cx, 2
+	mov ah ,3fh
+	int 21h
+	
+	mov bx,handle1
+	mov ah, 3eh
+	int 21h
+	pop dx
+	pop cx
+	pop bx
+	pop ax
+
+	ret
+ReadBestScore ENDP
+	
 ;*****************************************************************************
 ; THE GAME LOOP IS HERE
 ;*****************************************************************************
@@ -1796,11 +1912,10 @@ START:
 		jne polla
 	call ClearScreen
 	loopa:
+	call ReadBestScore
 	call resetAll
 	mov current_copter_row, 100
 	mov current_copter_col, 70
-	
-	
 	
 	; reset mouse and get its status: 
 	mov ax, 0
