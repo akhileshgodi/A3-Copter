@@ -1386,13 +1386,13 @@ gameOverProc PROC
 	mov ah, 09
 	int 21h
 	
-	movCursor 12, 14
+	movCursor 14, 14
 	
 	mov dx, offset newGameMsg
 	mov ah, 09
 	int 21h
 	
-	movCursor 14, 14
+	movCursor 16, 14
 	
 	mov dx, offset exitGameMsg
 	mov ah, 09
@@ -1591,7 +1591,7 @@ noobject:
 			cmp detect_collision, 1
 		   	je dummyjmp2
 			;If yes Kaboom! GAME OVER otherwise keep polling.
-			mov dx,9100
+			mov dx,10000
 			call MakeSound
 			inc score
 			call ClearCopter;Erase the present copter first
@@ -1723,7 +1723,7 @@ MakeSound PROC			;Assumes dx has the note's freq.
                                 ;  port 61h).
         or      al, 00000011b   ; Set bits 1 and 0.
         out     61h, al         ; Send new value.
-        mov     bx, 1          ; Pause for duration of note.
+        mov     bx, 3         ; Pause for duration of note.
 
 		pause1:
 		mov     cx, 65535
@@ -1804,17 +1804,17 @@ START:
 		int 33h
 		cmp bx, 1
 		jne pollloop
-	cmp dx, 96
+	cmp dx, 112
 	jle pollloop
-	cmp dx,  104
+	cmp dx,  120
 	jge isexit
 		
 	jmp loopa
 		
 	isexit :
-		cmp dx, 112
+		cmp dx, 128
 		jle pollloop
-		cmp dx, 120
+		cmp dx, 136
 		jge pollloop
 		
 	call HideMouse	
