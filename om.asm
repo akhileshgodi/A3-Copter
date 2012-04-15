@@ -69,6 +69,7 @@
 	topcurve 	db 320 dup(0)
 	filename 	db "curve3.txt"
 	randnum	 	db 00h
+	soundTime 	dw 3
 
 	obscol1		dw	300
 	obscol2		dw	300
@@ -1379,6 +1380,21 @@ DetectCollision PROC
 			ret
 DetectCollision ENDP
 gameOverProc PROC
+	
+	mov soundTime, 10
+	mov dx, 15000
+	call makeSound
+	mov dx, 12000
+	call makeSound
+	mov dx, 9000
+	call makeSound
+	mov soundTime, 20
+	mov dx, 6000
+	call makeSound
+	mov dx, 3000
+	call makeSound
+	
+	mov soundTime, 3
 				
 	movCursor 10, 14
 		
@@ -1723,7 +1739,7 @@ MakeSound PROC			;Assumes dx has the note's freq.
                                 ;  port 61h).
         or      al, 00000011b   ; Set bits 1 and 0.
         out     61h, al         ; Send new value.
-        mov     bx, 3         ; Pause for duration of note.
+        mov     bx, soundTime         ; Pause for duration of note.
 
 		pause1:
 		mov     cx, 65535
