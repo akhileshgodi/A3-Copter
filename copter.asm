@@ -2287,7 +2287,7 @@ START:
 		
 	mov dx,3
 	mov level,dx
-	jmp pollloop
+	jmp loopa
 	
 	isexit :
 		cmp dx, 158
